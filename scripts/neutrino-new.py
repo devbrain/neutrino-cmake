@@ -45,7 +45,7 @@ include(FetchContent)
 if(NOT DEFINED NEUTRINO_CMAKE_DIR)
     FetchContent_Declare(neutrino_cmake
         GIT_REPOSITORY https://github.com/devbrain/neutrino-cmake.git
-        GIT_TAG main
+        GIT_TAG master
         GIT_SHALLOW TRUE
     )
     FetchContent_MakeAvailable(neutrino_cmake)
@@ -121,7 +121,8 @@ endif()
 # Summary
 # ============================================================================
 
-if(NEUTRINO_PROJECT_IS_TOP_LEVEL)
+neutrino_is_top_level(_is_top_level)
+if(_is_top_level)
     neutrino_print_options({project_name})
 endif()
 '''
@@ -145,7 +146,7 @@ include(GenerateExportHeader)
 if(NOT DEFINED NEUTRINO_CMAKE_DIR)
     FetchContent_Declare(neutrino_cmake
         GIT_REPOSITORY https://github.com/devbrain/neutrino-cmake.git
-        GIT_TAG main
+        GIT_TAG master
         GIT_SHALLOW TRUE
     )
     FetchContent_MakeAvailable(neutrino_cmake)
@@ -243,7 +244,8 @@ endif()
 # Summary
 # ============================================================================
 
-if(NEUTRINO_PROJECT_IS_TOP_LEVEL)
+neutrino_is_top_level(_is_top_level)
+if(_is_top_level)
     neutrino_print_options({project_name})
 endif()
 '''
@@ -266,7 +268,7 @@ include(FetchContent)
 if(NOT DEFINED NEUTRINO_CMAKE_DIR)
     FetchContent_Declare(neutrino_cmake
         GIT_REPOSITORY https://github.com/devbrain/neutrino-cmake.git
-        GIT_TAG main
+        GIT_TAG master
         GIT_SHALLOW TRUE
     )
     FetchContent_MakeAvailable(neutrino_cmake)
@@ -668,6 +670,85 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
 
+TEMPLATES[".github/workflows/ci.yml"] = '''\
+name: CI
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Linux GCC
+          - os: ubuntu-latest
+            compiler: gcc
+            version: 13
+
+          # Linux Clang
+          - os: ubuntu-latest
+            compiler: clang
+            version: 18
+
+          # macOS
+          - os: macos-latest
+            compiler: apple-clang
+
+          # Windows MSVC
+          - os: windows-latest
+            compiler: msvc
+
+    runs-on: ${{{{ matrix.os }}}}
+    name: ${{{{ matrix.os }}}} - ${{{{ matrix.compiler }}}}${{{{ matrix.version && format(' {{0}}', matrix.version) || '' }}}}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install compiler (Linux GCC)
+        if: runner.os == 'Linux' && matrix.compiler == 'gcc'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++-${{{{ matrix.version }}}}
+          echo "CC=gcc-${{{{ matrix.version }}}}" >> $GITHUB_ENV
+          echo "CXX=g++-${{{{ matrix.version }}}}" >> $GITHUB_ENV
+
+      - name: Install compiler (Linux Clang)
+        if: runner.os == 'Linux' && matrix.compiler == 'clang'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lsb-release wget software-properties-common gnupg
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo bash ./llvm.sh "${{{{ matrix.version }}}}" all
+          echo "CC=clang-${{{{ matrix.version }}}}" >> $GITHUB_ENV
+          echo "CXX=clang++-${{{{ matrix.version }}}}" >> $GITHUB_ENV
+
+      - name: Configure CMake (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cmake -B build \\
+            -DCMAKE_BUILD_TYPE=Release \\
+            -DNEUTRINO_{project_name_upper}_BUILD_TESTS=ON
+
+      - name: Configure CMake (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          cmake -B build `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DNEUTRINO_{project_name_upper}_BUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Run tests
+        run: ctest --test-dir build --build-config Release --output-on-failure
+'''
+
 # =============================================================================
 # Helper Functions
 # =============================================================================
@@ -858,6 +939,13 @@ def generate_project(args):
         author=author,
     )
     write_file(root / "LICENSE", license_content)
+
+    # CI workflow (for library projects with tests)
+    if args.with_tests and project_type != "executable":
+        ci_content = TEMPLATES[".github/workflows/ci.yml"].format(
+            project_name_upper=project_name_upper,
+        )
+        write_file(root / ".github" / "workflows" / "ci.yml", ci_content)
 
     print()
     print(f"Project '{project_name}' created successfully!")
