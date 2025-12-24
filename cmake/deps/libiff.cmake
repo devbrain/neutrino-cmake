@@ -6,7 +6,7 @@
 
 include_guard(GLOBAL)
 
-set(NEUTRINO_LIBIFF_VERSION "main" CACHE STRING "libiff version/tag")
+set(NEUTRINO_LIBIFF_VERSION "master" CACHE STRING "libiff version/tag")
 
 function(neutrino_fetch_libiff)
     if(TARGET neutrino::iff OR TARGET iff::iff)
