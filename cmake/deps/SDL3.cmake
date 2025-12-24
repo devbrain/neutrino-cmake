@@ -6,7 +6,7 @@
 
 include_guard(GLOBAL)
 
-set(NEUTRINO_SDL3_VERSION "3.1.6" CACHE STRING "SDL3 version")
+set(NEUTRINO_SDL3_VERSION "3.2.8" CACHE STRING "SDL3 version")
 
 function(neutrino_fetch_SDL3)
     if(TARGET SDL3::SDL3)
@@ -28,7 +28,7 @@ function(neutrino_fetch_SDL3)
 
     FetchContent_Declare(SDL3
         GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-        GIT_TAG preview-${NEUTRINO_SDL3_VERSION}
+        GIT_TAG release-${NEUTRINO_SDL3_VERSION}
         GIT_SHALLOW TRUE
     )
 
