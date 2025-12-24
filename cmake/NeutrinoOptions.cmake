@@ -53,11 +53,14 @@ function(neutrino_define_options COMPONENT_NAME)
     # Detect if this project is top-level
     # Use CMAKE_CURRENT_SOURCE_DIR which is the directory where neutrino_define_options()
     # is called from (the consumer's CMakeLists.txt), not affected by FetchContent
+    message(STATUS "[DEBUG ${COMPONENT_NAME}] CMAKE_SOURCE_DIR=${CMAKE_SOURCE_DIR}")
+    message(STATUS "[DEBUG ${COMPONENT_NAME}] CMAKE_CURRENT_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}")
     if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         set(_is_top_level ON)
     else()
         set(_is_top_level OFF)
     endif()
+    message(STATUS "[DEBUG ${COMPONENT_NAME}] _is_top_level=${_is_top_level}")
 
     # Tests - ON only when top-level and not cross-compiling
     cmake_dependent_option(${PREFIX}_BUILD_TESTS
