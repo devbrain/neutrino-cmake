@@ -61,6 +61,7 @@ function(neutrino_define_options COMPONENT_NAME)
         set(_is_top_level OFF)
     endif()
     message(STATUS "[DEBUG ${COMPONENT_NAME}] _is_top_level=${_is_top_level}")
+    message(STATUS "[DEBUG ${COMPONENT_NAME}] NEUTRINO_RUNTIME_TOOLS_AVAILABLE=${NEUTRINO_RUNTIME_TOOLS_AVAILABLE}")
 
     # Tests - ON only when top-level and not cross-compiling
     cmake_dependent_option(${PREFIX}_BUILD_TESTS
