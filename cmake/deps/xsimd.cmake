@@ -6,7 +6,7 @@
 
 include_guard(GLOBAL)
 
-set(NEUTRINO_XSIMD_VERSION "12.1.1" CACHE STRING "xsimd version")
+set(NEUTRINO_XSIMD_VERSION "14.0.0" CACHE STRING "xsimd version")
 
 function(neutrino_fetch_xsimd)
     if(TARGET xsimd::xsimd OR TARGET xsimd)

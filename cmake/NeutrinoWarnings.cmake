@@ -65,7 +65,7 @@ set(NEUTRINO_WARNINGS_GNU_CLANG
     -Woverloaded-virtual        # Function hides virtual from base class
     -Wconversion                # Implicit conversions that may alter value
     -Wsign-conversion           # Sign conversions
-    -Wnull-dereference          # Dereferencing null pointer
+    # -Wnull-dereference - Disabled: generates false positives with GCC 13+ STL code
     -Wdouble-promotion          # Float implicitly promoted to double
     -Wformat=2                  # Format string issues
     -Wimplicit-fallthrough      # Fallthrough in switch without annotation
