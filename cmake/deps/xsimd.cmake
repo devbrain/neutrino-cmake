@@ -22,6 +22,7 @@ function(neutrino_fetch_xsimd)
         GIT_REPOSITORY https://github.com/xtensor-stack/xsimd.git
         GIT_TAG ${NEUTRINO_XSIMD_VERSION}
         GIT_SHALLOW TRUE
+        PATCH_COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../patches/patch_cmake_minimum.cmake
     )
 
     FetchContent_MakeAvailable(xsimd)
