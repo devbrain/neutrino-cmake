@@ -25,7 +25,7 @@ include(FetchContent)
 
 FetchContent_Declare(neutrino_cmake
     GIT_REPOSITORY https://github.com/devbrain/neutrino-cmake.git
-    GIT_TAG main
+    GIT_TAG master
     GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(neutrino_cmake)
