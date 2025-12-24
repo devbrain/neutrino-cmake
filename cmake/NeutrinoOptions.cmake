@@ -21,11 +21,12 @@ include(CMakeDependentOption)
 # -----------------------------------------------------------------------------
 
 # Detect if this is the top-level project
-# Works with both CMake 3.21+ PROJECT_IS_TOP_LEVEL and earlier versions
+# Note: We use CMAKE_SOURCE_DIR comparison instead of PROJECT_IS_TOP_LEVEL
+# because PROJECT_IS_TOP_LEVEL gets overwritten by FetchContent'd projects'
+# project() calls, while CMAKE_SOURCE_DIR/CMAKE_CURRENT_SOURCE_DIR comparison
+# correctly reflects where include(NeutrinoInit) was called from.
 if(NOT DEFINED NEUTRINO_PROJECT_IS_TOP_LEVEL)
-    if(DEFINED PROJECT_IS_TOP_LEVEL)
-        set(NEUTRINO_PROJECT_IS_TOP_LEVEL ${PROJECT_IS_TOP_LEVEL})
-    elseif(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         set(NEUTRINO_PROJECT_IS_TOP_LEVEL ON)
     else()
         set(NEUTRINO_PROJECT_IS_TOP_LEVEL OFF)

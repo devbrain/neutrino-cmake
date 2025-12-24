@@ -30,8 +30,8 @@ function(neutrino_fetch_utf8cpp)
 
     FetchContent_MakeAvailable(utf8cpp)
 
-    # Create consistent alias if needed
-    if(TARGET utf8::cpp AND NOT TARGET utf8cpp::utf8cpp)
+    # Create consistent alias - utf8cpp creates 'utf8cpp' target
+    if(TARGET utf8cpp AND NOT TARGET utf8cpp::utf8cpp)
         add_library(utf8cpp::utf8cpp ALIAS utf8cpp)
     endif()
 endfunction()
