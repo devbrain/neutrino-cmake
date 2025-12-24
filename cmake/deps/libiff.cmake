@@ -19,7 +19,7 @@ function(neutrino_fetch_libiff)
     include(FetchContent)
 
     FetchContent_Declare(libiff
-        GIT_REPOSITORY https://github.com/devbrain/lib_iff.git
+        GIT_REPOSITORY https://github.com/devbrain/libiff.git
         GIT_TAG ${NEUTRINO_LIBIFF_VERSION}
         GIT_SHALLOW TRUE
     )
