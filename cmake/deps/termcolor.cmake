@@ -24,5 +24,18 @@ function(neutrino_fetch_termcolor)
         GIT_SHALLOW TRUE
     )
 
-    FetchContent_MakeAvailable(termcolor)
+    FetchContent_GetProperties(termcolor)
+    if(NOT termcolor_POPULATED)
+        FetchContent_Populate(termcolor)
+
+        # Patch cmake_minimum_required for CMake 4.x compatibility
+        file(READ ${termcolor_SOURCE_DIR}/CMakeLists.txt _termcolor_cmake_content)
+        string(REGEX REPLACE
+            "cmake_minimum_required\\(VERSION [0-9]+\\.[0-9]+\\)"
+            "cmake_minimum_required(VERSION 3.5)"
+            _termcolor_cmake_content "${_termcolor_cmake_content}")
+        file(WRITE ${termcolor_SOURCE_DIR}/CMakeLists.txt "${_termcolor_cmake_content}")
+
+        add_subdirectory(${termcolor_SOURCE_DIR} ${termcolor_BINARY_DIR} EXCLUDE_FROM_ALL)
+    endif()
 endfunction()

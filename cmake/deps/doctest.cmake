@@ -27,7 +27,20 @@ function(neutrino_fetch_doctest)
     # Disable doctest's own tests
     set(DOCTEST_NO_INSTALL ON CACHE BOOL "" FORCE)
 
-    FetchContent_MakeAvailable(doctest)
+    FetchContent_GetProperties(doctest)
+    if(NOT doctest_POPULATED)
+        FetchContent_Populate(doctest)
+
+        # Patch cmake_minimum_required for CMake 4.x compatibility
+        file(READ ${doctest_SOURCE_DIR}/CMakeLists.txt _doctest_cmake_content)
+        string(REGEX REPLACE
+            "cmake_minimum_required\\(VERSION [0-9]+\\.[0-9]+\\)"
+            "cmake_minimum_required(VERSION 3.5)"
+            _doctest_cmake_content "${_doctest_cmake_content}")
+        file(WRITE ${doctest_SOURCE_DIR}/CMakeLists.txt "${_doctest_cmake_content}")
+
+        add_subdirectory(${doctest_SOURCE_DIR} ${doctest_BINARY_DIR} EXCLUDE_FROM_ALL)
+    endif()
 
     # Suppress warnings for doctest headers
     if(TARGET doctest)
