@@ -51,9 +51,9 @@ function(neutrino_define_options COMPONENT_NAME)
     set(PREFIX "NEUTRINO_${COMP_UPPER}")
 
     # Detect if this project is top-level
-    # Use PROJECT_SOURCE_DIR to get the calling project's source dir
-    # This works correctly even when neutrino-cmake is fetched via FetchContent
-    if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+    # Use CMAKE_CURRENT_SOURCE_DIR which is the directory where neutrino_define_options()
+    # is called from (the consumer's CMakeLists.txt), not affected by FetchContent
+    if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         set(_is_top_level ON)
     else()
         set(_is_top_level OFF)
@@ -154,7 +154,7 @@ function(neutrino_define_host_tools_option COMPONENT_NAME)
     set(PREFIX "NEUTRINO_${COMP_UPPER}")
 
     # Detect if this project is top-level
-    if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+    if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         set(_is_top_level ON)
     else()
         set(_is_top_level OFF)
@@ -183,7 +183,7 @@ function(neutrino_define_runtime_tools_option COMPONENT_NAME)
     set(PREFIX "NEUTRINO_${COMP_UPPER}")
 
     # Detect if this project is top-level
-    if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+    if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         set(_is_top_level ON)
     else()
         set(_is_top_level OFF)
@@ -206,7 +206,7 @@ Check if the calling project is the top-level project.
 Sets <output_var> to ON or OFF in parent scope.
 #]=============================================================================]
 function(neutrino_is_top_level OUTPUT_VAR)
-    if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+    if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         set(${OUTPUT_VAR} ON PARENT_SCOPE)
     else()
         set(${OUTPUT_VAR} OFF PARENT_SCOPE)
