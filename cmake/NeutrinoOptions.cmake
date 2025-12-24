@@ -17,23 +17,6 @@ include_guard(GLOBAL)
 include(CMakeDependentOption)
 
 # -----------------------------------------------------------------------------
-# Top-Level Detection
-# -----------------------------------------------------------------------------
-
-# Detect if this is the top-level project
-# Note: We use CMAKE_SOURCE_DIR comparison instead of PROJECT_IS_TOP_LEVEL
-# because PROJECT_IS_TOP_LEVEL gets overwritten by FetchContent'd projects'
-# project() calls, while CMAKE_SOURCE_DIR/CMAKE_CURRENT_SOURCE_DIR comparison
-# correctly reflects where include(NeutrinoInit) was called from.
-if(NOT DEFINED NEUTRINO_PROJECT_IS_TOP_LEVEL)
-    if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-        set(NEUTRINO_PROJECT_IS_TOP_LEVEL ON)
-    else()
-        set(NEUTRINO_PROJECT_IS_TOP_LEVEL OFF)
-    endif()
-endif()
-
-# -----------------------------------------------------------------------------
 # Runtime Tools Availability
 # -----------------------------------------------------------------------------
 
@@ -67,11 +50,20 @@ function(neutrino_define_options COMPONENT_NAME)
     string(REPLACE "-" "_" COMP_UPPER "${COMP_UPPER}")
     set(PREFIX "NEUTRINO_${COMP_UPPER}")
 
+    # Detect if this project is top-level
+    # Use PROJECT_SOURCE_DIR to get the calling project's source dir
+    # This works correctly even when neutrino-cmake is fetched via FetchContent
+    if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+        set(_is_top_level ON)
+    else()
+        set(_is_top_level OFF)
+    endif()
+
     # Tests - ON only when top-level and not cross-compiling
     cmake_dependent_option(${PREFIX}_BUILD_TESTS
         "Build ${COMPONENT_NAME} tests"
         ON
-        "NEUTRINO_PROJECT_IS_TOP_LEVEL;NEUTRINO_RUNTIME_TOOLS_AVAILABLE"
+        "_is_top_level;NEUTRINO_RUNTIME_TOOLS_AVAILABLE"
         OFF
     )
 
@@ -79,7 +71,7 @@ function(neutrino_define_options COMPONENT_NAME)
     cmake_dependent_option(${PREFIX}_BUILD_EXAMPLES
         "Build ${COMPONENT_NAME} examples"
         ON
-        "NEUTRINO_PROJECT_IS_TOP_LEVEL;NEUTRINO_RUNTIME_TOOLS_AVAILABLE"
+        "_is_top_level;NEUTRINO_RUNTIME_TOOLS_AVAILABLE"
         OFF
     )
 
@@ -87,7 +79,7 @@ function(neutrino_define_options COMPONENT_NAME)
     cmake_dependent_option(${PREFIX}_BUILD_BENCHMARKS
         "Build ${COMPONENT_NAME} benchmarks"
         OFF
-        "NEUTRINO_PROJECT_IS_TOP_LEVEL;NEUTRINO_RUNTIME_TOOLS_AVAILABLE"
+        "_is_top_level;NEUTRINO_RUNTIME_TOOLS_AVAILABLE"
         OFF
     )
 
@@ -101,7 +93,7 @@ function(neutrino_define_options COMPONENT_NAME)
     cmake_dependent_option(${PREFIX}_INSTALL
         "Enable ${COMPONENT_NAME} installation"
         ON
-        "NEUTRINO_PROJECT_IS_TOP_LEVEL"
+        "_is_top_level"
         OFF
     )
 
@@ -161,10 +153,17 @@ function(neutrino_define_host_tools_option COMPONENT_NAME)
     string(REPLACE "-" "_" COMP_UPPER "${COMP_UPPER}")
     set(PREFIX "NEUTRINO_${COMP_UPPER}")
 
+    # Detect if this project is top-level
+    if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+        set(_is_top_level ON)
+    else()
+        set(_is_top_level OFF)
+    endif()
+
     cmake_dependent_option(${PREFIX}_BUILD_HOST_TOOLS
         "Build ${COMPONENT_NAME} host tools (code generators)"
         ON
-        "NEUTRINO_PROJECT_IS_TOP_LEVEL"
+        "_is_top_level"
         OFF
     )
 
@@ -183,14 +182,35 @@ function(neutrino_define_runtime_tools_option COMPONENT_NAME)
     string(REPLACE "-" "_" COMP_UPPER "${COMP_UPPER}")
     set(PREFIX "NEUTRINO_${COMP_UPPER}")
 
+    # Detect if this project is top-level
+    if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+        set(_is_top_level ON)
+    else()
+        set(_is_top_level OFF)
+    endif()
+
     cmake_dependent_option(${PREFIX}_BUILD_TOOLS
         "Build ${COMPONENT_NAME} tools"
         ON
-        "NEUTRINO_PROJECT_IS_TOP_LEVEL;NEUTRINO_RUNTIME_TOOLS_AVAILABLE"
+        "_is_top_level;NEUTRINO_RUNTIME_TOOLS_AVAILABLE"
         OFF
     )
 
     set(${PREFIX}_BUILD_TOOLS ${${PREFIX}_BUILD_TOOLS} PARENT_SCOPE)
+endfunction()
+
+#[=============================================================================[
+neutrino_is_top_level(<output_var>)
+
+Check if the calling project is the top-level project.
+Sets <output_var> to ON or OFF in parent scope.
+#]=============================================================================]
+function(neutrino_is_top_level OUTPUT_VAR)
+    if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+        set(${OUTPUT_VAR} ON PARENT_SCOPE)
+    else()
+        set(${OUTPUT_VAR} OFF PARENT_SCOPE)
+    endif()
 endfunction()
 
 #[=============================================================================[
