@@ -21,13 +21,19 @@ include(CMakeDependentOption)
 # -----------------------------------------------------------------------------
 
 # Runtime tools (executables that run on target) are disabled for cross-compilation
-set(NEUTRINO_RUNTIME_TOOLS_AVAILABLE ON)
-if(NEUTRINO_CROSS_COMPILING)
-    set(NEUTRINO_RUNTIME_TOOLS_AVAILABLE OFF)
+# Use CACHE INTERNAL to make available across FetchContent boundaries
+if(NOT DEFINED CACHE{NEUTRINO_RUNTIME_TOOLS_AVAILABLE})
+    if(NEUTRINO_CROSS_COMPILING)
+        set(NEUTRINO_RUNTIME_TOOLS_AVAILABLE OFF CACHE INTERNAL "Runtime tools available")
+    else()
+        set(NEUTRINO_RUNTIME_TOOLS_AVAILABLE ON CACHE INTERNAL "Runtime tools available")
+    endif()
 endif()
 
 # Host tools (code generators) are always available - they run on build machine
-set(NEUTRINO_HOST_TOOLS_AVAILABLE ON)
+if(NOT DEFINED CACHE{NEUTRINO_HOST_TOOLS_AVAILABLE})
+    set(NEUTRINO_HOST_TOOLS_AVAILABLE ON CACHE INTERNAL "Host tools available")
+endif()
 
 # -----------------------------------------------------------------------------
 # Standard Option Definitions
@@ -53,15 +59,11 @@ function(neutrino_define_options COMPONENT_NAME)
     # Detect if this project is top-level
     # Use CMAKE_CURRENT_SOURCE_DIR which is the directory where neutrino_define_options()
     # is called from (the consumer's CMakeLists.txt), not affected by FetchContent
-    message(STATUS "[DEBUG ${COMPONENT_NAME}] CMAKE_SOURCE_DIR=${CMAKE_SOURCE_DIR}")
-    message(STATUS "[DEBUG ${COMPONENT_NAME}] CMAKE_CURRENT_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}")
     if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         set(_is_top_level ON)
     else()
         set(_is_top_level OFF)
     endif()
-    message(STATUS "[DEBUG ${COMPONENT_NAME}] _is_top_level=${_is_top_level}")
-    message(STATUS "[DEBUG ${COMPONENT_NAME}] NEUTRINO_RUNTIME_TOOLS_AVAILABLE=${NEUTRINO_RUNTIME_TOOLS_AVAILABLE}")
 
     # Tests - ON only when top-level and not cross-compiling
     cmake_dependent_option(${PREFIX}_BUILD_TESTS
