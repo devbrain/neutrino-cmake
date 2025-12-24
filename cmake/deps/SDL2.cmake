@@ -54,7 +54,21 @@ function(neutrino_fetch_SDL2)
     set(SDL_TEST OFF CACHE BOOL "" FORCE)
     set(SDL2_DISABLE_INSTALL ON CACHE BOOL "" FORCE)
 
-    FetchContent_MakeAvailable(SDL2)
+    FetchContent_GetProperties(SDL2)
+    if(NOT sdl2_POPULATED)
+        FetchContent_Populate(SDL2)
+
+        # Patch cmake_minimum_required for CMake 4.x compatibility
+        # SDL2 uses VERSION 3.0.0...3.5 which CMake 4.x rejects
+        file(READ ${sdl2_SOURCE_DIR}/CMakeLists.txt _sdl2_cmake_content)
+        string(REGEX REPLACE
+            "cmake_minimum_required\\(VERSION 3\\.0\\.0\\.\\.\\."
+            "cmake_minimum_required(VERSION 3.5..."
+            _sdl2_cmake_content "${_sdl2_cmake_content}")
+        file(WRITE ${sdl2_SOURCE_DIR}/CMakeLists.txt "${_sdl2_cmake_content}")
+
+        add_subdirectory(${sdl2_SOURCE_DIR} ${sdl2_BINARY_DIR} EXCLUDE_FROM_ALL)
+    endif()
 
     # Create alias if needed
     if(TARGET SDL2-static AND NOT TARGET SDL2::SDL2)
