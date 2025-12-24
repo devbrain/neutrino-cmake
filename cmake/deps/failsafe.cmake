@@ -6,7 +6,7 @@
 
 include_guard(GLOBAL)
 
-set(NEUTRINO_FAILSAFE_VERSION "main" CACHE STRING "failsafe version/tag")
+set(NEUTRINO_FAILSAFE_VERSION "master" CACHE STRING "failsafe version/tag")
 
 function(neutrino_fetch_failsafe)
     if(TARGET neutrino::failsafe OR TARGET failsafe)

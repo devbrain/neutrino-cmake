@@ -6,7 +6,7 @@
 
 include_guard(GLOBAL)
 
-set(NEUTRINO_EULER_VERSION "main" CACHE STRING "euler version/tag")
+set(NEUTRINO_EULER_VERSION "master" CACHE STRING "euler version/tag")
 
 function(neutrino_fetch_euler)
     if(TARGET neutrino::euler OR TARGET euler::euler)
