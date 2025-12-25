@@ -34,4 +34,9 @@ function(neutrino_fetch_failsafe)
     if(TARGET failsafe AND NOT TARGET neutrino::failsafe)
         add_library(neutrino::failsafe ALIAS failsafe)
     endif()
+
+    # Suppress warnings for failsafe headers
+    if(TARGET failsafe)
+        neutrino_suppress_warnings(failsafe)
+    endif()
 endfunction()

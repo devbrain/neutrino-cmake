@@ -26,4 +26,9 @@ function(neutrino_fetch_termcolor)
     )
 
     FetchContent_MakeAvailable(termcolor)
+
+    # Suppress warnings for termcolor headers
+    if(TARGET termcolor)
+        neutrino_suppress_warnings(termcolor)
+    endif()
 endfunction()

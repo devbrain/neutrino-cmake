@@ -44,4 +44,9 @@ function(neutrino_fetch_SDL3)
     if(TARGET SDL3-static AND NOT TARGET SDL3::SDL3)
         add_library(SDL3::SDL3 ALIAS SDL3-static)
     endif()
+
+    # Suppress warnings for third-party library
+    if(TARGET SDL3-static)
+        neutrino_suppress_warnings(SDL3-static)
+    endif()
 endfunction()

@@ -74,4 +74,9 @@ function(neutrino_fetch_SDL2)
     if(TARGET SDL2-static AND NOT TARGET SDL2::SDL2)
         add_library(SDL2::SDL2 ALIAS SDL2-static)
     endif()
+
+    # Suppress warnings for third-party library
+    if(TARGET SDL2-static)
+        neutrino_suppress_warnings(SDL2-static)
+    endif()
 endfunction()

@@ -35,6 +35,11 @@ function(neutrino_fetch_datascript)
     if(TARGET datascript AND NOT TARGET neutrino::datascript)
         add_library(neutrino::datascript ALIAS datascript)
     endif()
+
+    # Suppress warnings for datascript
+    if(TARGET datascript)
+        neutrino_suppress_warnings(datascript)
+    endif()
 endfunction()
 
 # Function to use datascript code generator

@@ -55,6 +55,9 @@ function(neutrino_fetch_imgui)
 
     add_library(imgui::imgui ALIAS imgui)
 
+    # Suppress warnings for third-party imgui code
+    neutrino_suppress_warnings(imgui)
+
     # SDL2 backend
     if(NEUTRINO_IMGUI_BACKEND_SDL2)
         add_library(imgui_backend_sdl2 STATIC
@@ -65,6 +68,7 @@ function(neutrino_fetch_imgui)
         )
         target_link_libraries(imgui_backend_sdl2 PUBLIC imgui SDL2::SDL2)
         add_library(imgui::backend_sdl2 ALIAS imgui_backend_sdl2)
+        neutrino_suppress_warnings(imgui_backend_sdl2)
     endif()
 
     # SDL3 backend
@@ -77,6 +81,7 @@ function(neutrino_fetch_imgui)
         )
         target_link_libraries(imgui_backend_sdl3 PUBLIC imgui SDL3::SDL3)
         add_library(imgui::backend_sdl3 ALIAS imgui_backend_sdl3)
+        neutrino_suppress_warnings(imgui_backend_sdl3)
     endif()
 
     # OpenGL3 backend
@@ -89,6 +94,7 @@ function(neutrino_fetch_imgui)
         )
         target_link_libraries(imgui_backend_opengl3 PUBLIC imgui)
         add_library(imgui::backend_opengl3 ALIAS imgui_backend_opengl3)
+        neutrino_suppress_warnings(imgui_backend_opengl3)
     endif()
 
     # Vulkan backend
@@ -102,6 +108,7 @@ function(neutrino_fetch_imgui)
         )
         target_link_libraries(imgui_backend_vulkan PUBLIC imgui Vulkan::Vulkan)
         add_library(imgui::backend_vulkan ALIAS imgui_backend_vulkan)
+        neutrino_suppress_warnings(imgui_backend_vulkan)
     endif()
 
     # SDL2 Renderer backend
@@ -114,6 +121,7 @@ function(neutrino_fetch_imgui)
         )
         target_link_libraries(imgui_backend_sdlrenderer2 PUBLIC imgui SDL2::SDL2)
         add_library(imgui::backend_sdlrenderer2 ALIAS imgui_backend_sdlrenderer2)
+        neutrino_suppress_warnings(imgui_backend_sdlrenderer2)
     endif()
 
     # SDL3 Renderer backend
@@ -126,6 +134,7 @@ function(neutrino_fetch_imgui)
         )
         target_link_libraries(imgui_backend_sdlrenderer3 PUBLIC imgui SDL3::SDL3)
         add_library(imgui::backend_sdlrenderer3 ALIAS imgui_backend_sdlrenderer3)
+        neutrino_suppress_warnings(imgui_backend_sdlrenderer3)
     endif()
 endfunction()
 
