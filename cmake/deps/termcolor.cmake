@@ -18,17 +18,23 @@ function(neutrino_fetch_termcolor)
 
     include(FetchContent)
 
+    # Download just the header file
     FetchContent_Declare(termcolor
-        GIT_REPOSITORY https://github.com/ikalnytskyi/termcolor.git
-        GIT_TAG v${NEUTRINO_TERMCOLOR_VERSION}
-        GIT_SHALLOW TRUE
-        PATCH_COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../patches/patch_cmake_minimum.cmake
+        URL https://raw.githubusercontent.com/ikalnytskyi/termcolor/v${NEUTRINO_TERMCOLOR_VERSION}/include/termcolor/termcolor.hpp
+        DOWNLOAD_NO_EXTRACT TRUE
     )
 
     FetchContent_MakeAvailable(termcolor)
 
-    # Suppress warnings for termcolor headers
-    if(TARGET termcolor)
-        neutrino_suppress_warnings(termcolor)
+    # Create include directory structure: termcolor/termcolor.hpp
+    set(_termcolor_include_dir "${termcolor_SOURCE_DIR}/termcolor")
+    if(NOT EXISTS "${_termcolor_include_dir}/termcolor.hpp")
+        file(MAKE_DIRECTORY "${_termcolor_include_dir}")
+        file(COPY_FILE "${termcolor_SOURCE_DIR}/termcolor.hpp" "${_termcolor_include_dir}/termcolor.hpp")
     endif()
+
+    # Create interface library
+    add_library(termcolor INTERFACE)
+    add_library(termcolor::termcolor ALIAS termcolor)
+    target_include_directories(termcolor INTERFACE "${termcolor_SOURCE_DIR}")
 endfunction()

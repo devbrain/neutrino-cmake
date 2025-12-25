@@ -18,20 +18,23 @@ function(neutrino_fetch_doctest)
 
     include(FetchContent)
 
-    # Disable doctest's own tests
-    set(DOCTEST_NO_INSTALL ON CACHE BOOL "" FORCE)
-
+    # Download just the header file from releases
     FetchContent_Declare(doctest
-        GIT_REPOSITORY https://github.com/doctest/doctest.git
-        GIT_TAG v${NEUTRINO_DOCTEST_VERSION}
-        GIT_SHALLOW TRUE
-        PATCH_COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../patches/patch_cmake_minimum.cmake
+        URL https://github.com/doctest/doctest/releases/download/v${NEUTRINO_DOCTEST_VERSION}/doctest.h
+        DOWNLOAD_NO_EXTRACT TRUE
     )
 
     FetchContent_MakeAvailable(doctest)
 
-    # Suppress warnings for doctest headers
-    if(TARGET doctest)
-        neutrino_suppress_warnings(doctest)
+    # Create include directory structure: doctest/doctest.h
+    set(_doctest_include_dir "${doctest_SOURCE_DIR}/doctest")
+    if(NOT EXISTS "${_doctest_include_dir}/doctest.h")
+        file(MAKE_DIRECTORY "${_doctest_include_dir}")
+        file(COPY_FILE "${doctest_SOURCE_DIR}/doctest.h" "${_doctest_include_dir}/doctest.h")
     endif()
+
+    # Create interface library
+    add_library(doctest INTERFACE)
+    add_library(doctest::doctest ALIAS doctest)
+    target_include_directories(doctest INTERFACE "${doctest_SOURCE_DIR}")
 endfunction()
