@@ -753,6 +753,11 @@ jobs:
 # Helper Functions
 # =============================================================================
 
+def normalize_dep_name(dep: str) -> str:
+    """Convert dependency name to valid CMake identifier (remove hyphens)."""
+    return dep.replace("-", "")
+
+
 def create_directory(path: Path):
     """Create directory if it doesn't exist."""
     path.mkdir(parents=True, exist_ok=True)
@@ -797,15 +802,19 @@ def generate_project(args):
     if args.deps:
         deps_section = "\n"
         for dep in args.deps:
+            # Recipe file uses original name (e.g., mz-explode.cmake)
+            # Function/target names use normalized name without hyphens (e.g., mzexplode)
+            norm_dep = normalize_dep_name(dep)
             deps_section += f"include(${{NEUTRINO_CMAKE_DIR}}/deps/{dep}.cmake)\n"
-            deps_section += f"neutrino_fetch_{dep}()\n\n"
+            deps_section += f"neutrino_fetch_{norm_dep}()\n\n"
 
         link_section = "\ntarget_link_libraries({} {}\n".format(
             project_name,
             "INTERFACE" if project_type == "header-only" else "PUBLIC"
         )
         for dep in args.deps:
-            link_section += f"    neutrino::{dep}\n"
+            norm_dep = normalize_dep_name(dep)
+            link_section += f"    neutrino::{norm_dep}\n"
         link_section += ")\n"
 
         install_deps = "        DEPENDENCIES\n"
