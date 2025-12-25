@@ -365,8 +365,8 @@ target_link_libraries({project_name}_tests PRIVATE
 neutrino_target_warnings({project_name}_tests)
 neutrino_target_sanitizers({project_name}_tests)
 
-include(doctest)
-doctest_discover_tests({project_name}_tests)
+include(CTest)
+add_test(NAME {project_name}_tests COMMAND {project_name}_tests)
 '''
 
 TEMPLATES["test/test_main.cpp"] = '''\
