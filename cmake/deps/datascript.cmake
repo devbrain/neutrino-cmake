@@ -27,7 +27,10 @@ function(neutrino_fetch_datascript)
     )
 
     # Disable datascript tests when used as dependency
-    set(DATASCRIPT_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(NEUTRINO_DATASCRIPT_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+
+    # Enable host tools (ds code generator) - required for code generation
+    set(NEUTRINO_DATASCRIPT_BUILD_HOST_TOOLS ON CACHE BOOL "" FORCE)
 
     FetchContent_MakeAvailable(datascript)
 
