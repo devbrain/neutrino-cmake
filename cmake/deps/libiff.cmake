@@ -22,7 +22,6 @@ function(neutrino_fetch_libiff)
         GIT_REPOSITORY https://github.com/devbrain/libiff.git
         GIT_TAG ${NEUTRINO_LIBIFF_VERSION}
         GIT_SHALLOW TRUE
-        PATCH_COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../patches/patch_cmake_minimum.cmake
     )
 
     # Disable libiff tests when used as dependency
@@ -34,10 +33,5 @@ function(neutrino_fetch_libiff)
     # Create neutrino:: alias if not already created
     if(TARGET iff AND NOT TARGET neutrino::iff)
         add_library(neutrino::iff ALIAS iff)
-    endif()
-
-    # Suppress warnings for third-party library
-    if(TARGET iff)
-        neutrino_suppress_warnings(iff)
     endif()
 endfunction()
