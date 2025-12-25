@@ -6,7 +6,7 @@
 
 include_guard(GLOBAL)
 
-set(NEUTRINO_MIO_VERSION "main" CACHE STRING "mio version/tag")
+set(NEUTRINO_MIO_VERSION "master" CACHE STRING "mio version/tag")
 
 function(neutrino_fetch_mio)
     if(TARGET neutrino::mio OR TARGET mio::mio)
