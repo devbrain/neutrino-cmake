@@ -32,6 +32,9 @@ function(neutrino_fetch_datascript)
     # Enable host tools (ds code generator) - required for code generation
     set(NEUTRINO_DATASCRIPT_BUILD_HOST_TOOLS ON CACHE BOOL "" FORCE)
 
+    # Disable warnings for dependency build
+    set(NEUTRINO_WARNINGS_AS_ERRORS OFF)
+
     FetchContent_MakeAvailable(datascript)
 
     # Create neutrino:: alias for the library if not already created
@@ -39,9 +42,12 @@ function(neutrino_fetch_datascript)
         add_library(neutrino::datascript ALIAS datascript)
     endif()
 
-    # Suppress warnings for datascript
+    # Suppress warnings for datascript and ds tool
     if(TARGET datascript)
         neutrino_suppress_warnings(datascript)
+    endif()
+    if(TARGET ds)
+        neutrino_suppress_warnings(ds)
     endif()
 endfunction()
 

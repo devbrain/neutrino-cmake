@@ -28,7 +28,15 @@ function(neutrino_fetch_libiff)
     set(NEUTRINO_IFF_BUILD_TESTS OFF CACHE BOOL "" FORCE)
     set(NEUTRINO_IFF_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
+    # Disable warnings for dependency build
+    set(NEUTRINO_WARNINGS_AS_ERRORS OFF)
+
     FetchContent_MakeAvailable(libiff)
+
+    # Suppress warnings for libiff (third-party code)
+    if(TARGET iff)
+        neutrino_suppress_warnings(iff)
+    endif()
 
     # Create neutrino:: alias if not already created
     if(TARGET iff AND NOT TARGET neutrino::iff)

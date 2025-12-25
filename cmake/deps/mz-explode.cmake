@@ -29,7 +29,15 @@ function(neutrino_fetch_mzexplode)
     set(MZEXPLODE_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
     set(MZEXPLODE_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 
+    # Disable warnings for dependency build
+    set(NEUTRINO_WARNINGS_AS_ERRORS OFF)
+
     FetchContent_MakeAvailable(mzexplode)
+
+    # Suppress warnings for mzexplode (third-party code)
+    if(TARGET libexe)
+        neutrino_suppress_warnings(libexe)
+    endif()
 
     # Create neutrino:: alias if not already created
     if(TARGET libexe AND NOT TARGET neutrino::mzexplode)

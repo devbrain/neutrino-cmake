@@ -52,8 +52,8 @@ if(NEUTRINO_WARNINGS_AS_ERRORS)
     list(APPEND NEUTRINO_WARNINGS_MSVC /WX)
 endif()
 
-# GCC and Clang common warnings
-set(NEUTRINO_WARNINGS_GNU_CLANG
+# GCC and Clang common warnings (C++ compatible)
+set(NEUTRINO_WARNINGS_GNU_CLANG_CXX
     -Wall                       # Enable most warnings
     -Wextra                     # Enable extra warnings
     -Wpedantic                  # Strict ISO C++ compliance
@@ -72,14 +72,25 @@ set(NEUTRINO_WARNINGS_GNU_CLANG
     -Wmisleading-indentation    # Indentation implies blocks that don't exist
 )
 
-# Add -Werror if warnings as errors is enabled
-if(NEUTRINO_WARNINGS_AS_ERRORS)
-    list(APPEND NEUTRINO_WARNINGS_GNU_CLANG -Werror)
-endif()
+# GCC and Clang common warnings (C compatible - no C++-only flags)
+set(NEUTRINO_WARNINGS_GNU_CLANG_C
+    -Wall
+    -Wextra
+    -Wpedantic
+    -Wshadow
+    -Wcast-align
+    -Wunused
+    -Wconversion
+    -Wsign-conversion
+    -Wdouble-promotion
+    -Wformat=2
+    -Wimplicit-fallthrough
+    -Wmisleading-indentation
+)
 
-# GCC-specific warnings
-set(NEUTRINO_WARNINGS_GCC
-    ${NEUTRINO_WARNINGS_GNU_CLANG}
+# GCC-specific warnings (C++)
+set(NEUTRINO_WARNINGS_GCC_CXX
+    ${NEUTRINO_WARNINGS_GNU_CLANG_CXX}
     -Wduplicated-cond           # Duplicated conditions in if-else chains
     -Wduplicated-branches       # Duplicated branches in if-else chains
     -Wlogical-op                # Suspicious uses of logical operators
@@ -87,13 +98,32 @@ set(NEUTRINO_WARNINGS_GCC
     -Wsuggest-override          # Suggest override for virtual functions
 )
 
-# Clang-specific warnings
-set(NEUTRINO_WARNINGS_CLANG
-    ${NEUTRINO_WARNINGS_GNU_CLANG}
+# GCC-specific warnings (C)
+set(NEUTRINO_WARNINGS_GCC_C
+    ${NEUTRINO_WARNINGS_GNU_CLANG_C}
+    -Wduplicated-cond
+    -Wduplicated-branches
+    -Wlogical-op
+)
+
+# Clang-specific warnings (C++)
+set(NEUTRINO_WARNINGS_CLANG_CXX
+    ${NEUTRINO_WARNINGS_GNU_CLANG_CXX}
     -Wmost                      # Enable most warnings
     -Wno-c++98-compat           # Don't warn about C++98 incompatibility
     -Wno-c++98-compat-pedantic  # Don't warn about C++98 incompatibility (pedantic)
 )
+
+# Clang-specific warnings (C)
+set(NEUTRINO_WARNINGS_CLANG_C
+    ${NEUTRINO_WARNINGS_GNU_CLANG_C}
+    -Wmost
+)
+
+# Legacy variable names for compatibility
+set(NEUTRINO_WARNINGS_GNU_CLANG ${NEUTRINO_WARNINGS_GNU_CLANG_CXX})
+set(NEUTRINO_WARNINGS_GCC ${NEUTRINO_WARNINGS_GCC_CXX})
+set(NEUTRINO_WARNINGS_CLANG ${NEUTRINO_WARNINGS_CLANG_CXX})
 
 # Clang with thread safety analysis
 set(NEUTRINO_WARNINGS_CLANG_THREAD_SAFETY
@@ -109,6 +139,10 @@ neutrino_target_warnings(<target> [PRIVATE|PUBLIC|INTERFACE])
 
 Apply standard Neutrino warning flags to a target.
 Visibility defaults to PRIVATE for compiled libraries, INTERFACE for header-only.
+
+Warning flags are applied per-language (C vs C++) to avoid invalid flag errors.
+The NEUTRINO_WARNINGS_AS_ERRORS option is checked at call time, allowing
+dependencies to disable it before being fetched.
 #]=============================================================================]
 function(neutrino_target_warnings TARGET)
     # Parse visibility argument
@@ -127,14 +161,36 @@ function(neutrino_target_warnings TARGET)
         endif()
     endif()
 
-    # Apply compiler-specific warnings
+    # Build warning lists with current NEUTRINO_WARNINGS_AS_ERRORS setting
     if(NEUTRINO_COMPILER_IS_MSVC)
-        target_compile_options(${TARGET} ${_visibility} ${NEUTRINO_WARNINGS_MSVC})
+        set(_warnings_cxx ${NEUTRINO_WARNINGS_MSVC})
+        set(_warnings_c ${NEUTRINO_WARNINGS_MSVC})
     elseif(NEUTRINO_COMPILER_IS_GCC)
-        target_compile_options(${TARGET} ${_visibility} ${NEUTRINO_WARNINGS_GCC})
+        set(_warnings_cxx ${NEUTRINO_WARNINGS_GCC_CXX})
+        set(_warnings_c ${NEUTRINO_WARNINGS_GCC_C})
     elseif(NEUTRINO_COMPILER_IS_CLANG)
-        target_compile_options(${TARGET} ${_visibility} ${NEUTRINO_WARNINGS_CLANG})
+        set(_warnings_cxx ${NEUTRINO_WARNINGS_CLANG_CXX})
+        set(_warnings_c ${NEUTRINO_WARNINGS_CLANG_C})
+    else()
+        return()
     endif()
+
+    # Add -Werror if warnings as errors is currently enabled
+    if(NEUTRINO_WARNINGS_AS_ERRORS)
+        if(NEUTRINO_COMPILER_IS_MSVC)
+            list(APPEND _warnings_cxx /WX)
+            list(APPEND _warnings_c /WX)
+        else()
+            list(APPEND _warnings_cxx -Werror)
+            list(APPEND _warnings_c -Werror)
+        endif()
+    endif()
+
+    # Apply language-specific warnings using generator expressions
+    target_compile_options(${TARGET} ${_visibility}
+        $<$<COMPILE_LANGUAGE:CXX>:${_warnings_cxx}>
+        $<$<COMPILE_LANGUAGE:C>:${_warnings_c}>
+    )
 endfunction()
 
 #[=============================================================================[
