@@ -31,4 +31,9 @@ function(neutrino_fetch_xsimd)
     if(TARGET xsimd AND NOT TARGET xsimd::xsimd)
         add_library(xsimd::xsimd ALIAS xsimd)
     endif()
+
+    # Suppress warnings for xsimd headers
+    if(TARGET xsimd)
+        neutrino_suppress_warnings(xsimd)
+    endif()
 endfunction()

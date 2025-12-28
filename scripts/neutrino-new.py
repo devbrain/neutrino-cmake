@@ -50,9 +50,9 @@ if(NOT DEFINED NEUTRINO_CMAKE_DIR)
     )
     FetchContent_MakeAvailable(neutrino_cmake)
     set(NEUTRINO_CMAKE_DIR "${{neutrino_cmake_SOURCE_DIR}}/cmake")
-    list(APPEND CMAKE_MODULE_PATH "${{NEUTRINO_CMAKE_DIR}}")
 endif()
 
+list(APPEND CMAKE_MODULE_PATH "${{NEUTRINO_CMAKE_DIR}}")
 include(NeutrinoInit)
 
 # ============================================================================
@@ -75,7 +75,7 @@ add_library(neutrino::{project_name} ALIAS {project_name})
 target_compile_features({project_name} INTERFACE cxx_std_{std})
 
 target_include_directories({project_name} INTERFACE
-    $<BUILD_INTERFACE:${{CMAKE_CURRENT_SOURCE_DIR}}/include>
+    $<BUILD_INTERFACE:${{PROJECT_SOURCE_DIR}}/include>
     $<INSTALL_INTERFACE:${{CMAKE_INSTALL_INCLUDEDIR}}>
 )
 {link_libraries}
@@ -151,9 +151,9 @@ if(NOT DEFINED NEUTRINO_CMAKE_DIR)
     )
     FetchContent_MakeAvailable(neutrino_cmake)
     set(NEUTRINO_CMAKE_DIR "${{neutrino_cmake_SOURCE_DIR}}/cmake")
-    list(APPEND CMAKE_MODULE_PATH "${{NEUTRINO_CMAKE_DIR}}")
 endif()
 
+list(APPEND CMAKE_MODULE_PATH "${{NEUTRINO_CMAKE_DIR}}")
 include(NeutrinoInit)
 
 # ============================================================================
@@ -181,15 +181,15 @@ target_compile_features({project_name} PUBLIC cxx_std_{std})
 
 target_include_directories({project_name}
     PUBLIC
-        $<BUILD_INTERFACE:${{CMAKE_CURRENT_SOURCE_DIR}}/include>
-        $<BUILD_INTERFACE:${{CMAKE_CURRENT_BINARY_DIR}}/include>
+        $<BUILD_INTERFACE:${{PROJECT_SOURCE_DIR}}/include>
+        $<BUILD_INTERFACE:${{PROJECT_BINARY_DIR}}/include>
         $<INSTALL_INTERFACE:${{CMAKE_INSTALL_INCLUDEDIR}}>
 )
 {link_libraries}
 # Generate export header
 generate_export_header({project_name}
     BASE_NAME {project_name}
-    EXPORT_FILE_NAME ${{CMAKE_CURRENT_BINARY_DIR}}/include/{project_name}/{project_name}_export.h
+    EXPORT_FILE_NAME ${{PROJECT_BINARY_DIR}}/include/{project_name}/{project_name}_export.h
 )
 
 # ============================================================================
@@ -230,7 +230,7 @@ if(NEUTRINO_{project_name_upper}_INSTALL)
 
     # Install generated export header
     install(FILES
-        ${{CMAKE_CURRENT_BINARY_DIR}}/include/{project_name}/{project_name}_export.h
+        ${{PROJECT_BINARY_DIR}}/include/{project_name}/{project_name}_export.h
         DESTINATION ${{CMAKE_INSTALL_INCLUDEDIR}}/{project_name}
     )
 
@@ -273,9 +273,9 @@ if(NOT DEFINED NEUTRINO_CMAKE_DIR)
     )
     FetchContent_MakeAvailable(neutrino_cmake)
     set(NEUTRINO_CMAKE_DIR "${{neutrino_cmake_SOURCE_DIR}}/cmake")
-    list(APPEND CMAKE_MODULE_PATH "${{NEUTRINO_CMAKE_DIR}}")
 endif()
 
+list(APPEND CMAKE_MODULE_PATH "${{NEUTRINO_CMAKE_DIR}}")
 include(NeutrinoInit)
 
 # ============================================================================
