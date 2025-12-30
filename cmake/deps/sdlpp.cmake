@@ -6,7 +6,7 @@
 
 include_guard(GLOBAL)
 
-set(NEUTRINO_SDLPP_VERSION "main" CACHE STRING "lib_sdlpp version/tag")
+set(NEUTRINO_SDLPP_VERSION "master" CACHE STRING "lib_sdlpp version/tag")
 
 function(neutrino_fetch_sdlpp)
     if(TARGET neutrino::sdlpp OR TARGET sdlpp::sdlpp)
