@@ -9,6 +9,7 @@ include_guard(GLOBAL)
 set(NEUTRINO_SDL3_VERSION "3.2.8" CACHE STRING "SDL3 version")
 
 function(neutrino_fetch_SDL3)
+    cmake_parse_arguments(NEUTRINO_SDL3 "SHARED;STATIC" "" "" ${ARGN})
     set(options SHARED STATIC)
     cmake_parse_arguments(NEUTRINO_SDL3 "" "" "${options}" ${ARGN})
 
@@ -36,6 +37,10 @@ function(neutrino_fetch_SDL3)
     )
 
     # SDL3 build options
+    if(NEUTRINO_SDL3_SHARED AND NEUTRINO_SDL3_STATIC)
+        message(FATAL_ERROR "neutrino_fetch_SDL3: SHARED and STATIC are mutually exclusive.")
+    endif()
+
     if(NEUTRINO_SDL3_SHARED)
         set(SDL_SHARED ON CACHE BOOL "" FORCE)
         set(SDL_STATIC OFF CACHE BOOL "" FORCE)
