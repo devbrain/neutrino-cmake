@@ -9,6 +9,9 @@ include_guard(GLOBAL)
 set(NEUTRINO_SDL3_VERSION "3.2.8" CACHE STRING "SDL3 version")
 
 function(neutrino_fetch_SDL3)
+    set(options SHARED STATIC)
+    cmake_parse_arguments(NEUTRINO_SDL3 "" "" "${options}" ${ARGN})
+
     if(TARGET SDL3::SDL3)
         message(STATUS "[Neutrino] SDL3 already available")
         return()
@@ -33,20 +36,34 @@ function(neutrino_fetch_SDL3)
     )
 
     # SDL3 build options
-    set(SDL_SHARED OFF CACHE BOOL "" FORCE)
-    set(SDL_STATIC ON CACHE BOOL "" FORCE)
+    if(NEUTRINO_SDL3_SHARED)
+        set(SDL_SHARED ON CACHE BOOL "" FORCE)
+        set(SDL_STATIC OFF CACHE BOOL "" FORCE)
+    else()
+        # Default to static unless explicitly requested otherwise.
+        set(SDL_SHARED OFF CACHE BOOL "" FORCE)
+        set(SDL_STATIC ON CACHE BOOL "" FORCE)
+    endif()
     set(SDL_TEST OFF CACHE BOOL "" FORCE)
     set(SDL_INSTALL OFF CACHE BOOL "" FORCE)
 
     FetchContent_MakeAvailable(SDL3)
 
     # Create alias if needed
-    if(TARGET SDL3-static AND NOT TARGET SDL3::SDL3)
-        add_library(SDL3::SDL3 ALIAS SDL3-static)
+    if(NEUTRINO_SDL3_SHARED)
+        if(TARGET SDL3-shared AND NOT TARGET SDL3::SDL3)
+            add_library(SDL3::SDL3 ALIAS SDL3-shared)
+        endif()
+    else()
+        if(TARGET SDL3-static AND NOT TARGET SDL3::SDL3)
+            add_library(SDL3::SDL3 ALIAS SDL3-static)
+        endif()
     endif()
 
     # Suppress warnings for third-party library
-    if(TARGET SDL3-static)
+    if(NEUTRINO_SDL3_SHARED AND TARGET SDL3-shared)
+        neutrino_suppress_warnings(SDL3-shared)
+    elseif(TARGET SDL3-static)
         neutrino_suppress_warnings(SDL3-static)
     endif()
 endfunction()
