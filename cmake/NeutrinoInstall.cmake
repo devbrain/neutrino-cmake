@@ -68,6 +68,7 @@ neutrino_install_library(<target>
     [DEPENDENCIES <deps>]
     [EXPORT_NAME <name>]
     [CONFIG_TEMPLATE <template>]
+    [SKIP_EXPORT]
 )
 
 Install a library with package configuration files.
@@ -79,10 +80,12 @@ Arguments:
     DEPENDENCIES    - find_dependency() calls for Config.cmake
     EXPORT_NAME     - Export name (default: ${target}Targets)
     CONFIG_TEMPLATE - Custom Config.cmake.in template
+    SKIP_EXPORT     - Skip install(EXPORT), create IMPORTED target manually.
+                      Use this when dependencies come from FetchContent.
 #]=============================================================================]
 function(neutrino_install_library TARGET)
     cmake_parse_arguments(ARG
-        ""
+        "SKIP_EXPORT"
         "NAMESPACE;COMPATIBILITY;EXPORT_NAME;CONFIG_TEMPLATE"
         "DEPENDENCIES"
         ${ARGN}
@@ -108,39 +111,22 @@ function(neutrino_install_library TARGET)
     # Get target type
     get_target_property(_type ${TARGET} TYPE)
 
-    # Install target
-    if(_type STREQUAL "INTERFACE_LIBRARY")
-        install(TARGETS ${TARGET}
-            EXPORT ${ARG_EXPORT_NAME}
-            INCLUDES DESTINATION "${_include_dir}"
-        )
-    else()
-        install(TARGETS ${TARGET}
-            EXPORT ${ARG_EXPORT_NAME}
-            RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
-            LIBRARY DESTINATION "${_lib_dir}"
-            ARCHIVE DESTINATION "${_lib_dir}"
-            INCLUDES DESTINATION "${_include_dir}"
-        )
-    endif()
+    if(ARG_SKIP_EXPORT)
+        # Install without EXPORT - for projects using FetchContent dependencies
+        if(_type STREQUAL "INTERFACE_LIBRARY")
+            install(TARGETS ${TARGET}
+                INCLUDES DESTINATION "${_include_dir}"
+            )
+        else()
+            install(TARGETS ${TARGET}
+                RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+                LIBRARY DESTINATION "${_lib_dir}"
+                ARCHIVE DESTINATION "${_lib_dir}"
+                INCLUDES DESTINATION "${_include_dir}"
+            )
+        endif()
 
-    # Install export file
-    install(EXPORT ${ARG_EXPORT_NAME}
-        FILE ${ARG_EXPORT_NAME}.cmake
-        NAMESPACE ${ARG_NAMESPACE}
-        DESTINATION "${_cmake_dir}"
-    )
-
-    # Generate and install package config files
-    if(ARG_CONFIG_TEMPLATE)
-        # Use provided template
-        configure_package_config_file(
-            "${ARG_CONFIG_TEMPLATE}"
-            "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}Config.cmake"
-            INSTALL_DESTINATION "${_cmake_dir}"
-        )
-    else()
-        # Generate config file content
+        # Generate config that creates IMPORTED target manually
         set(_config_content "@PACKAGE_INIT@\n\n")
 
         # Add dependencies
@@ -152,10 +138,31 @@ function(neutrino_install_library TARGET)
             string(APPEND _config_content "\n")
         endif()
 
-        string(APPEND _config_content "include(\"\${CMAKE_CURRENT_LIST_DIR}/${ARG_EXPORT_NAME}.cmake\")\n")
+        # Create IMPORTED target
+        string(APPEND _config_content "if(NOT TARGET ${ARG_NAMESPACE}${TARGET})\n")
+        if(_type STREQUAL "INTERFACE_LIBRARY")
+            string(APPEND _config_content "    add_library(${ARG_NAMESPACE}${TARGET} INTERFACE IMPORTED)\n")
+            string(APPEND _config_content "    set_target_properties(${ARG_NAMESPACE}${TARGET} PROPERTIES\n")
+            string(APPEND _config_content "        INTERFACE_INCLUDE_DIRECTORIES \"\${PACKAGE_PREFIX_DIR}/${_include_dir}\"\n")
+            string(APPEND _config_content "    )\n")
+        elseif(_type STREQUAL "STATIC_LIBRARY")
+            string(APPEND _config_content "    add_library(${ARG_NAMESPACE}${TARGET} STATIC IMPORTED)\n")
+            string(APPEND _config_content "    set_target_properties(${ARG_NAMESPACE}${TARGET} PROPERTIES\n")
+            string(APPEND _config_content "        INTERFACE_INCLUDE_DIRECTORIES \"\${PACKAGE_PREFIX_DIR}/${_include_dir}\"\n")
+            string(APPEND _config_content "        IMPORTED_LOCATION \"\${PACKAGE_PREFIX_DIR}/${_lib_dir}/\${CMAKE_STATIC_LIBRARY_PREFIX}${TARGET}\${CMAKE_STATIC_LIBRARY_SUFFIX}\"\n")
+            string(APPEND _config_content "    )\n")
+        else()
+            string(APPEND _config_content "    add_library(${ARG_NAMESPACE}${TARGET} SHARED IMPORTED)\n")
+            string(APPEND _config_content "    set_target_properties(${ARG_NAMESPACE}${TARGET} PROPERTIES\n")
+            string(APPEND _config_content "        INTERFACE_INCLUDE_DIRECTORIES \"\${PACKAGE_PREFIX_DIR}/${_include_dir}\"\n")
+            string(APPEND _config_content "        IMPORTED_LOCATION \"\${PACKAGE_PREFIX_DIR}/${_lib_dir}/\${CMAKE_SHARED_LIBRARY_PREFIX}${TARGET}\${CMAKE_SHARED_LIBRARY_SUFFIX}\"\n")
+            string(APPEND _config_content "    )\n")
+        endif()
+        string(APPEND _config_content "endif()\n")
+
         string(APPEND _config_content "\ncheck_required_components(${TARGET})\n")
 
-        # Write temporary config template
+        # Write config template
         file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}Config.cmake.in" "${_config_content}")
 
         configure_package_config_file(
@@ -163,6 +170,63 @@ function(neutrino_install_library TARGET)
             "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}Config.cmake"
             INSTALL_DESTINATION "${_cmake_dir}"
         )
+    else()
+        # Standard install with EXPORT
+        if(_type STREQUAL "INTERFACE_LIBRARY")
+            install(TARGETS ${TARGET}
+                EXPORT ${ARG_EXPORT_NAME}
+                INCLUDES DESTINATION "${_include_dir}"
+            )
+        else()
+            install(TARGETS ${TARGET}
+                EXPORT ${ARG_EXPORT_NAME}
+                RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+                LIBRARY DESTINATION "${_lib_dir}"
+                ARCHIVE DESTINATION "${_lib_dir}"
+                INCLUDES DESTINATION "${_include_dir}"
+            )
+        endif()
+
+        # Install export file
+        install(EXPORT ${ARG_EXPORT_NAME}
+            FILE ${ARG_EXPORT_NAME}.cmake
+            NAMESPACE ${ARG_NAMESPACE}
+            DESTINATION "${_cmake_dir}"
+        )
+
+        # Generate and install package config files
+        if(ARG_CONFIG_TEMPLATE)
+            # Use provided template
+            configure_package_config_file(
+                "${ARG_CONFIG_TEMPLATE}"
+                "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}Config.cmake"
+                INSTALL_DESTINATION "${_cmake_dir}"
+            )
+        else()
+            # Generate config file content
+            set(_config_content "@PACKAGE_INIT@\n\n")
+
+            # Add dependencies
+            if(ARG_DEPENDENCIES)
+                string(APPEND _config_content "include(CMakeFindDependencyMacro)\n\n")
+                foreach(_dep ${ARG_DEPENDENCIES})
+                    string(APPEND _config_content "${_dep}\n")
+                endforeach()
+                string(APPEND _config_content "\n")
+            endif()
+
+            string(APPEND _config_content "include(\"\${CMAKE_CURRENT_LIST_DIR}/${ARG_EXPORT_NAME}.cmake\")\n")
+            string(APPEND _config_content "\ncheck_required_components(${TARGET})\n")
+
+            # Write temporary config template
+            file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}Config.cmake.in" "${_config_content}")
+
+            configure_package_config_file(
+                "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}Config.cmake.in"
+                "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}Config.cmake"
+                INSTALL_DESTINATION "${_cmake_dir}"
+            )
+        endif()
     endif()
 
     # Generate version file
