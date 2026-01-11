@@ -397,7 +397,7 @@ TEST_CASE("{project_name} basic test") {{
 
 TEMPLATES["examples/CMakeLists.txt"] = '''\
 add_executable({project_name}_example
-    example.cpp
+    example.cc
 )
 
 target_link_libraries({project_name}_example PRIVATE
@@ -823,7 +823,7 @@ def generate_project(args):
 
         link_section = "\ntarget_link_libraries({} {}\n".format(
             project_name,
-            "INTERFACE" if project_type == "header-only" else "PUBLIC"
+            "INTERFACE" if project_type == "header-only" else "PRIVATE"
         )
         for dep in deps_list:
             norm_dep = normalize_dep_name(dep)
