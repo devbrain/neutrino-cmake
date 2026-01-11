@@ -29,8 +29,8 @@ function(neutrino_fetch_musac)
     set(NEUTRINO_MUSAC_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
     # Use SDL3 backend by default, disable SDL2
-    set(MUSAC_USE_SDL3 ON CACHE BOOL "" FORCE)
-    set(MUSAC_USE_SDL2 OFF CACHE BOOL "" FORCE)
+    set(NEUTRINO_MUSAC_BUILD_SDL3_BACKEND ON CACHE BOOL "" FORCE)
+    set(NEUTRINO_MUSAC_BUILD_SDL2_BACKEND OFF CACHE BOOL "" FORCE)
 
     FetchContent_MakeAvailable(musac)
 
