@@ -807,9 +807,14 @@ def generate_project(args):
     link_section = ""
     install_deps = ""
 
+    # Parse comma-separated dependencies
+    deps_list = []
     if args.deps:
+        deps_list = [d.strip() for d in args.deps.split(",") if d.strip()]
+
+    if deps_list:
         deps_section = "\n"
-        for dep in args.deps:
+        for dep in deps_list:
             # Recipe file uses original name (e.g., mz-explode.cmake)
             # Function/target names use normalized name without hyphens (e.g., mzexplode)
             norm_dep = normalize_dep_name(dep)
@@ -820,13 +825,13 @@ def generate_project(args):
             project_name,
             "INTERFACE" if project_type == "header-only" else "PUBLIC"
         )
-        for dep in args.deps:
+        for dep in deps_list:
             norm_dep = normalize_dep_name(dep)
             link_section += f"    neutrino::{norm_dep}\n"
         link_section += ")\n"
 
         install_deps = "        DEPENDENCIES\n"
-        for dep in args.deps:
+        for dep in deps_list:
             install_deps += f'            "find_dependency({dep} REQUIRED)"\n'
 
     # Select template
@@ -1000,7 +1005,7 @@ Examples:
   %(prog)s mylib --type=header-only --std=17
   %(prog)s mylib --type=compiled --std=20 --with-tests --with-examples
   %(prog)s myapp --type=executable --std=20
-  %(prog)s mylib --type=header-only --deps failsafe euler
+  %(prog)s mylib --type=header-only --deps=failsafe,euler
         """
     )
 
@@ -1067,8 +1072,8 @@ Examples:
 
     parser.add_argument(
         "--deps",
-        nargs="+",
-        help="Dependencies to include (e.g., failsafe euler)"
+        type=str,
+        help="Comma-separated dependencies (e.g., failsafe,euler,mio)"
     )
 
     parser.add_argument(
