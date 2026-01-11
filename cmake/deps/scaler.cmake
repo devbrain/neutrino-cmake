@@ -6,7 +6,7 @@
 
 include_guard(GLOBAL)
 
-set(NEUTRINO_SCALER_VERSION "main" CACHE STRING "scaler version/tag")
+set(NEUTRINO_SCALER_VERSION "master" CACHE STRING "scaler version/tag")
 
 function(neutrino_fetch_scaler)
     if(TARGET neutrino::scaler OR TARGET scaler::scaler)

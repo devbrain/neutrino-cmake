@@ -69,19 +69,7 @@ neutrino_define_options({project_name})
 # Library Target
 # ============================================================================
 
-add_library({project_name} INTERFACE)
-add_library(neutrino::{project_name} ALIAS {project_name})
-
-target_compile_features({project_name} INTERFACE cxx_std_{std})
-
-target_include_directories({project_name} INTERFACE
-    $<BUILD_INTERFACE:${{PROJECT_SOURCE_DIR}}/include>
-    $<INSTALL_INTERFACE:${{CMAKE_INSTALL_INCLUDEDIR}}>
-)
-{link_libraries}
-# ============================================================================
-# Warnings (for tests/examples only - header-only libs don't compile)
-# ============================================================================
+add_subdirectory(src/{project_name})
 
 # ============================================================================
 # Tests
@@ -127,6 +115,22 @@ if(_is_top_level)
 endif()
 '''
 
+# -----------------------------------------------------------------------------
+# Library src/CMakeLists.txt Templates
+# -----------------------------------------------------------------------------
+
+TEMPLATES["src/CMakeLists.txt.header_only"] = '''\
+add_library({project_name} INTERFACE)
+add_library(neutrino::{project_name} ALIAS {project_name})
+
+target_compile_features({project_name} INTERFACE cxx_std_{std})
+
+target_include_directories({project_name} INTERFACE
+    $<BUILD_INTERFACE:${{PROJECT_SOURCE_DIR}}/include>
+    $<INSTALL_INTERFACE:${{CMAKE_INSTALL_INCLUDEDIR}}>
+)
+{link_libraries}'''
+
 TEMPLATES["CMakeLists.txt.compiled"] = '''\
 cmake_minimum_required(VERSION 3.20)
 
@@ -170,34 +174,7 @@ neutrino_define_library_options({project_name})
 # Library Target
 # ============================================================================
 
-neutrino_library_type({project_name} _lib_type)
-
-add_library({project_name} ${{_lib_type}}
-    src/{project_name}.cpp
-)
-add_library(neutrino::{project_name} ALIAS {project_name})
-
-target_compile_features({project_name} PUBLIC cxx_std_{std})
-
-target_include_directories({project_name}
-    PUBLIC
-        $<BUILD_INTERFACE:${{PROJECT_SOURCE_DIR}}/include>
-        $<BUILD_INTERFACE:${{PROJECT_BINARY_DIR}}/include>
-        $<INSTALL_INTERFACE:${{CMAKE_INSTALL_INCLUDEDIR}}>
-)
-{link_libraries}
-# Generate export header
-generate_export_header({project_name}
-    BASE_NAME {project_name}
-    EXPORT_FILE_NAME ${{PROJECT_BINARY_DIR}}/include/{project_name}/{project_name}_export.h
-)
-
-# ============================================================================
-# Compiler Warnings
-# ============================================================================
-
-neutrino_target_warnings({project_name})
-neutrino_target_sanitizers({project_name})
+add_subdirectory(src/{project_name})
 
 # ============================================================================
 # Tests
@@ -250,6 +227,37 @@ if(_is_top_level)
 endif()
 '''
 
+TEMPLATES["src/CMakeLists.txt.compiled"] = '''\
+neutrino_library_type({project_name} _lib_type)
+
+add_library({project_name} ${{_lib_type}}
+    {project_name}.cc
+)
+add_library(neutrino::{project_name} ALIAS {project_name})
+
+target_compile_features({project_name} PUBLIC cxx_std_{std})
+
+target_include_directories({project_name}
+    PUBLIC
+        $<BUILD_INTERFACE:${{PROJECT_SOURCE_DIR}}/include>
+        $<BUILD_INTERFACE:${{PROJECT_BINARY_DIR}}/include>
+        $<INSTALL_INTERFACE:${{CMAKE_INSTALL_INCLUDEDIR}}>
+)
+{link_libraries}
+# Generate export header
+generate_export_header({project_name}
+    BASE_NAME {project_name}
+    EXPORT_FILE_NAME ${{PROJECT_BINARY_DIR}}/include/{project_name}/{project_name}_export.h
+)
+
+# ============================================================================
+# Compiler Warnings
+# ============================================================================
+
+neutrino_target_warnings({project_name})
+neutrino_target_sanitizers({project_name})
+'''
+
 TEMPLATES["CMakeLists.txt.executable"] = '''\
 cmake_minimum_required(VERSION 3.20)
 
@@ -287,7 +295,7 @@ include(NeutrinoInit)
 # ============================================================================
 
 add_executable({project_name}
-    src/main.cpp
+    src/main.cc
 )
 
 target_compile_features({project_name} PRIVATE cxx_std_{std})
@@ -353,8 +361,8 @@ int main(int argc, char* argv[]) {{
 
 TEMPLATES["test/CMakeLists.txt"] = '''\
 add_executable({project_name}_tests
-    test_main.cpp
-    test_{project_name}.cpp
+    test_main.cc
+    test_{project_name}.cc
 )
 
 target_link_libraries({project_name}_tests PRIVATE
@@ -792,7 +800,7 @@ def generate_project(args):
     print()
 
     # Determine header extension
-    header_ext = "hpp" if std >= 11 else "h"
+    header_ext = "hh"
 
     # Build dependencies section
     deps_section = ""
@@ -845,8 +853,10 @@ def generate_project(args):
 
     if project_type != "executable":
         create_directory(root / "include" / project_name)
+        create_directory(root / "src" / project_name)
+    else:
+        create_directory(root / "src")
 
-    create_directory(root / "src")
     create_directory(root / "docs")
 
     if args.with_tests and project_type != "executable":
@@ -857,6 +867,22 @@ def generate_project(args):
 
     # Write files
     write_file(root / "CMakeLists.txt", cmake_content)
+
+    # Write library sub-CMakeLists.txt
+    if project_type == "header-only":
+        src_cmake_content = TEMPLATES["src/CMakeLists.txt.header_only"].format(
+            project_name=project_name,
+            std=std,
+            link_libraries=link_section.format(project_name) if link_section else "",
+        )
+        write_file(root / "src" / project_name / "CMakeLists.txt", src_cmake_content)
+    elif project_type == "compiled":
+        src_cmake_content = TEMPLATES["src/CMakeLists.txt.compiled"].format(
+            project_name=project_name,
+            std=std,
+            link_libraries=link_section.format(project_name) if link_section else "",
+        )
+        write_file(root / "src" / project_name / "CMakeLists.txt", src_cmake_content)
 
     # Header file
     guard = f"{project_name_upper}_{project_name_upper}_{header_ext.upper()}_"
@@ -882,10 +908,10 @@ def generate_project(args):
             namespace=project_name.replace("-", "_"),
             ext=header_ext,
         )
-        write_file(root / "src" / f"{project_name}.cpp", source_content)
+        write_file(root / "src" / project_name / f"{project_name}.cc", source_content)
     elif project_type == "executable":
         main_content = TEMPLATES["main.cpp"].format(project_name=project_name)
-        write_file(root / "src" / "main.cpp", main_content)
+        write_file(root / "src" / "main.cc", main_content)
 
     # Test files
     if args.with_tests and project_type != "executable":
@@ -897,13 +923,13 @@ def generate_project(args):
         )
         write_file(root / "test" / "CMakeLists.txt", test_cmake)
 
-        write_file(root / "test" / "test_main.cpp", TEMPLATES["test/test_main.cpp"])
+        write_file(root / "test" / "test_main.cc", TEMPLATES["test/test_main.cpp"])
 
         test_content = TEMPLATES["test/test_project.cpp"].format(
             project_name=project_name,
             ext=header_ext,
         )
-        write_file(root / "test" / f"test_{project_name}.cpp", test_content)
+        write_file(root / "test" / f"test_{project_name}.cc", test_content)
 
     # Example files
     if args.with_examples and project_type != "executable":
@@ -919,7 +945,7 @@ def generate_project(args):
             project_name=project_name,
             ext=header_ext,
         )
-        write_file(root / "examples" / "example.cpp", example_content)
+        write_file(root / "examples" / "example.cc", example_content)
 
     # Additional files
     write_file(root / ".gitignore", TEMPLATES[".gitignore"])
