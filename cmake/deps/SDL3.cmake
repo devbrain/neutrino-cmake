@@ -50,7 +50,11 @@ function(neutrino_fetch_SDL3)
         set(SDL_STATIC ON CACHE BOOL "" FORCE)
     endif()
     set(SDL_TEST OFF CACHE BOOL "" FORCE)
+    set(SDL_TEST_LIBRARY OFF CACHE BOOL "" FORCE)
     set(SDL_INSTALL OFF CACHE BOOL "" FORCE)
+
+    # Disable X11 XTEST extension (requires libxtst-dev which may not be available in CI)
+    set(SDL_X11_XTEST OFF CACHE BOOL "" FORCE)
 
     FetchContent_MakeAvailable(SDL3)
 
