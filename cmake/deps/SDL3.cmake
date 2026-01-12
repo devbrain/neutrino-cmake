@@ -6,7 +6,7 @@
 
 include_guard(GLOBAL)
 
-set(NEUTRINO_SDL3_VERSION "3.2.8" CACHE STRING "SDL3 version")
+set(NEUTRINO_SDL3_VERSION "3.4.0" CACHE STRING "SDL3 version")
 
 function(neutrino_fetch_SDL3)
     cmake_parse_arguments(NEUTRINO_SDL3 "SHARED;STATIC" "" "" ${ARGN})
