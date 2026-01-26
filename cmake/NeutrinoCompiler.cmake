@@ -125,6 +125,34 @@ else()
 endif()
 
 # -----------------------------------------------------------------------------
+# MSVC Runtime Library Configuration
+# -----------------------------------------------------------------------------
+# Ensures consistent CRT linkage across all targets, including FetchContent
+# dependencies. This prevents crashes and linker errors from mixing /MD and /MT.
+#
+# Options:
+#   NEUTRINO_MSVC_RUNTIME_DYNAMIC (default ON) - Use /MD (DLL runtime)
+#   When OFF, uses /MT (static runtime)
+#
+# The actual flag (/MD vs /MDd, /MT vs /MTd) is determined automatically
+# based on build configuration (Release vs Debug).
+# -----------------------------------------------------------------------------
+
+if(NEUTRINO_COMPILER_IS_MSVC)
+    option(NEUTRINO_MSVC_RUNTIME_DYNAMIC "Use dynamic CRT (/MD) instead of static (/MT)" ON)
+
+    if(NEUTRINO_MSVC_RUNTIME_DYNAMIC)
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL" CACHE STRING
+            "MSVC runtime library" FORCE)
+    else()
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE STRING
+            "MSVC runtime library" FORCE)
+    endif()
+
+    message(STATUS "[Neutrino] MSVC Runtime: ${CMAKE_MSVC_RUNTIME_LIBRARY}")
+endif()
+
+# -----------------------------------------------------------------------------
 # Build Type Helpers
 # -----------------------------------------------------------------------------
 
