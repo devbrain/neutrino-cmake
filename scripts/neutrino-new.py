@@ -830,7 +830,8 @@ def generate_project(args):
             link_section += f"    neutrino::{norm_dep}\n"
         link_section += ")\n"
 
-        install_deps = "        DEPENDENCIES\n"
+        install_deps = "        SKIP_EXPORT\n"
+        install_deps += "        DEPENDENCIES\n"
         for dep in deps_list:
             install_deps += f'            "find_dependency({dep} REQUIRED)"\n'
 
