@@ -228,11 +228,17 @@ function(neutrino_suppress_warnings TARGET)
             )
         endif()
     else()
-        # For compiled libraries, disable warnings
+        # For compiled libraries, disable warnings and mark includes as SYSTEM
         if(NEUTRINO_COMPILER_IS_MSVC)
             target_compile_options(${TARGET} PRIVATE /W0)
         else()
             target_compile_options(${TARGET} PRIVATE -w)
+        endif()
+        get_target_property(_includes ${TARGET} INTERFACE_INCLUDE_DIRECTORIES)
+        if(_includes)
+            set_target_properties(${TARGET} PROPERTIES
+                INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${_includes}"
+            )
         endif()
     endif()
 endfunction()
