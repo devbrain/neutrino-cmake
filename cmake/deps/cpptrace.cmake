@@ -25,6 +25,9 @@ function(neutrino_fetch_cpptrace)
         OVERRIDE_FIND_PACKAGE
     )
 
+    # Use addr2line backend to avoid heavy libdwarf/zstd dependency chain
+    set(CPPTRACE_GET_SYMBOLS_WITH_ADDR2LINE ON CACHE BOOL "" FORCE)
+
     FetchContent_MakeAvailable(cpptrace)
 
     if(TARGET cpptrace)
