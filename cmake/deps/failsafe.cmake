@@ -19,7 +19,7 @@ function(neutrino_fetch_failsafe)
     include(FetchContent)
 
     FetchContent_Declare(failsafe
-        GIT_REPOSITORY https://github.com/devbrain/failsafe.git
+        GIT_REPOSITORY git@github.com:devbrain/failsafe.git
         GIT_TAG ${NEUTRINO_FAILSAFE_VERSION}
         GIT_SHALLOW TRUE
     )
