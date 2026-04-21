@@ -24,11 +24,18 @@ function(neutrino_fetch_onyx_ui)
         GIT_SHALLOW TRUE
     )
 
-    # Disable tests, examples, and backends when used as dependency
-    set(NEUTRINO_ONYX_UI_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-    set(NEUTRINO_ONYX_UI_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-    set(NEUTRINO_ONYX_UI_BUILD_BACKEND_CONIO OFF CACHE BOOL "" FORCE)
-    set(NEUTRINO_ONYX_UI_BUILD_BACKEND_SDLPP OFF CACHE BOOL "" FORCE)
+    # Sensible defaults for dependency mode: tests, examples and
+    # every backend off. These are `set(... CACHE ...)` WITHOUT FORCE,
+    # so a caller who sets one of the cache vars ahead of the fetch
+    # (typically with `set(VAR ON CACHE BOOL "" FORCE)`) overrides the
+    # default — use that to opt into backends you actually need. For
+    # example warlords does:
+    #     set(NEUTRINO_ONYX_UI_BUILD_BACKEND_SDLPP ON CACHE BOOL "" FORCE)
+    #     neutrino_fetch_onyx_ui()
+    set(NEUTRINO_ONYX_UI_BUILD_TESTS         OFF CACHE BOOL "")
+    set(NEUTRINO_ONYX_UI_BUILD_EXAMPLES      OFF CACHE BOOL "")
+    set(NEUTRINO_ONYX_UI_BUILD_BACKEND_CONIO OFF CACHE BOOL "")
+    set(NEUTRINO_ONYX_UI_BUILD_BACKEND_SDLPP OFF CACHE BOOL "")
 
     FetchContent_MakeAvailable(onyx_ui)
 
