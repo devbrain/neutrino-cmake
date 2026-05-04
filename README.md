@@ -93,6 +93,7 @@ Located in `cmake/deps/`. See [dependencies overview](docs/dependencies/) for fu
 | [`mz-explode.cmake`](docs/dependencies/mz-explode.md) | `neutrino::mzexplode` | MZ decompression |
 | [`datascript.cmake`](docs/dependencies/datascript.md) | `neutrino::datascript` | Binary parser generator |
 | [`sdlpp.cmake`](docs/dependencies/sdlpp.md) | `neutrino::sdlpp` | C++ SDL3 wrapper |
+| `onyx_anim.cmake` | `neutrino::onyx_anim_sdk`, `neutrino::onyx_anim_codecs`, `neutrino::onyx_anim_player` | Animation/video codecs (FLC, Smacker, Bink1, Amiga ANIM, CDXL, SEQ, ANM, YAFA) |
 
 ### Using a Dependency
 
