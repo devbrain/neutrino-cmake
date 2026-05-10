@@ -218,9 +218,15 @@ Makes the target a SYSTEM include to suppress warnings in headers.
 #]=============================================================================]
 function(neutrino_suppress_warnings TARGET)
     get_target_property(_type ${TARGET} TYPE)
+    get_target_property(_imported ${TARGET} IMPORTED)
 
-    if(_type STREQUAL "INTERFACE_LIBRARY")
-        # For interface libraries, mark include dirs as SYSTEM
+    # IMPORTED targets (e.g. a host-built `ds` exposed during cross
+    # compilation) and INTERFACE libraries can only have INTERFACE
+    # properties set on them — target_compile_options(... PRIVATE)
+    # would error with "may only set INTERFACE properties on IMPORTED
+    # targets". They also have no sources we compile, so suppressing
+    # warnings on them only matters for headers they expose.
+    if(_type STREQUAL "INTERFACE_LIBRARY" OR _imported)
         get_target_property(_includes ${TARGET} INTERFACE_INCLUDE_DIRECTORIES)
         if(_includes)
             set_target_properties(${TARGET} PROPERTIES
