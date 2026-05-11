@@ -405,24 +405,39 @@ function(neutrino_option VAR_NAME DESCRIPTION DEFAULT)
     # Declare the cache var (no-op if user already set it via -D / FORCE).
     set(${VAR_NAME} ${_effective_default} CACHE BOOL "${DESCRIPTION}")
 
-    # Extract component name: everything between NEUTRINO_ and the last
-    # two underscore-separated tokens (CATEGORY_NAME). Falls back to
-    # first token if the name is short.
+    # Extract component name + category by splitting around the first
+    # known-category token in the name. Each known category is matched
+    # as a complete underscore-delimited segment of the var name.
+    #
+    # We can't simply assume single-token NAME (parts[-1]) because
+    # codec axes like AMIGA_ANIM / ATARI_SEQ contain underscores
+    # themselves. Likewise we can't assume single-token COMP, because
+    # some components are multi-word (ONYX_ANIM, ONYX_IMAGE, ...).
+    #
+    # The category enumerates the legal grouping verbs documented in
+    # this file's header. Order matters for the regex match: longer
+    # categories first so e.g. DECOMPRESSOR matches before any prefix.
+    set(_known_categories
+        DECOMPRESSOR BUILD ENABLE USE INSTALL CODEC FORMAT)
+
     string(REGEX REPLACE "^NEUTRINO_" "" _stripped "${VAR_NAME}")
-    string(REPLACE "_" ";" _parts "${_stripped}")
-    list(LENGTH _parts _nparts)
-    if(_nparts LESS 3)
-        message(FATAL_ERROR
-            "neutrino_option: '${VAR_NAME}' missing CATEGORY_NAME suffix")
-    endif()
-    # COMP = parts[0..N-3], CATEGORY = parts[N-2], NAME = parts[N-1]
-    math(EXPR _comp_end "${_nparts} - 3")
-    set(_comp_parts "")
-    foreach(_i RANGE 0 ${_comp_end})
-        list(GET _parts ${_i} _p)
-        list(APPEND _comp_parts ${_p})
+    set(_comp_name "")
+    set(_matched_category "")
+    foreach(_cat IN LISTS _known_categories)
+        # _COMP1_COMP2_..._CAT_NAME1_NAME2_...  — anchor on _CAT_.
+        if(_stripped MATCHES "^([A-Z0-9_]+)_${_cat}_[A-Z0-9_]+$")
+            set(_comp_name "${CMAKE_MATCH_1}")
+            set(_matched_category "${_cat}")
+            break()
+        endif()
     endforeach()
-    string(REPLACE ";" "_" _comp_name "${_comp_parts}")
+
+    if(NOT _matched_category)
+        message(FATAL_ERROR
+            "neutrino_option: '${VAR_NAME}' does not contain a known "
+            "category token (BUILD/ENABLE/USE/CODEC/FORMAT/DECOMPRESSOR/INSTALL). "
+            "See NeutrinoOptions.cmake header for the naming convention.")
+    endif()
 
     # Register globally for the summary printer.
     set_property(GLOBAL APPEND PROPERTY NEUTRINO_OPTIONS_${_comp_name} "${VAR_NAME}")
@@ -458,21 +473,30 @@ function(neutrino_print_summary COMPONENT_NAME)
         return()
     endif()
 
-    # Bucket options by category. Category is the second-to-last
-    # underscore-separated token in the name.
+    # Bucket options by category. Category is matched against the
+    # known-category list rather than positionally — codec NAMEs like
+    # ATARI_SEQ / AMIGA_ANIM contain underscores and would otherwise
+    # confuse a positional parse (ATARI would be misread as the
+    # category).
+    set(_known_categories
+        DECOMPRESSOR BUILD ENABLE USE INSTALL CODEC FORMAT)
     set(_categories "")
     foreach(_opt ${_opts})
         string(REGEX REPLACE "^NEUTRINO_${COMP_UPPER}_" "" _suffix "${_opt}")
-        string(REPLACE "_" ";" _parts "${_suffix}")
-        list(LENGTH _parts _n)
-        math(EXPR _cat_idx "${_n} - 2")
-        if(_cat_idx LESS 0)
-            set(_cat_idx 0)
+        set(_matched "")
+        foreach(_cat IN LISTS _known_categories)
+            if(_suffix MATCHES "^${_cat}_[A-Z0-9_]+$")
+                set(_matched "${_cat}")
+                break()
+            endif()
+        endforeach()
+        if(NOT _matched)
+            # Fall back so we never lose an option from the summary.
+            set(_matched "MISC")
         endif()
-        list(GET _parts ${_cat_idx} _cat)
-        list(APPEND _cat_${_cat}_opts "${_opt}")
-        if(NOT _cat IN_LIST _categories)
-            list(APPEND _categories ${_cat})
+        list(APPEND _cat_${_matched}_opts "${_opt}")
+        if(NOT _matched IN_LIST _categories)
+            list(APPEND _categories ${_matched})
         endif()
     endforeach()
 
