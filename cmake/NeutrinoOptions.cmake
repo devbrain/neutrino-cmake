@@ -6,10 +6,28 @@
 # Naming convention: NEUTRINO_<COMPONENT>_<CATEGORY>_<OPTION>
 #
 # Categories:
-#   BUILD_*     - What to build (tests, examples, docs, benchmarks)
-#   ENABLE_*    - Feature toggles
-#   USE_*       - Dependency selection
-#   INSTALL     - Installation toggle
+#   BUILD_*         - What to build (tests, examples, docs, benchmarks, shared)
+#   ENABLE_*        - Feature toggles
+#   USE_*           - Dependency selection
+#   CODEC_*         - Codec selection (image / audio / animation codec families)
+#   FORMAT_*        - Format-parser selection (e.g. mzexplode's PE/NE/MZ readers)
+#   DECOMPRESSOR_*  - Decompressor selection (e.g. mzexplode's LZEXE/PKLITE)
+#   INSTALL         - Installation toggle
+#
+# The CODEC/FORMAT/DECOMPRESSOR categories are used by component libraries
+# (onyx_image, onyx_anim, musac, mz-explode) to let downstream consumers
+# opt out of features they don't need, shrinking the linked binary.
+#
+# These categories follow a meta-flag pattern: each category exposes an
+# `_ALL` variant that controls the default of every individual member.
+# Consumers can bulk-disable then opt-in:
+#
+#   set(NEUTRINO_ONYX_IMAGE_CODEC_ALL OFF CACHE BOOL "" FORCE)
+#   set(NEUTRINO_ONYX_IMAGE_CODEC_LBM ON  CACHE BOOL "" FORCE)
+#   set(NEUTRINO_ONYX_IMAGE_CODEC_PCX ON  CACHE BOOL "" FORCE)
+#
+# Implementation lives in the `neutrino_option_group` / `neutrino_option`
+# helpers below — see those docstrings for the API.
 # =============================================================================
 
 include_guard(GLOBAL)
@@ -274,5 +292,253 @@ function(neutrino_library_type COMPONENT_NAME OUTPUT_VAR)
         set(${OUTPUT_VAR} SHARED PARENT_SCOPE)
     else()
         set(${OUTPUT_VAR} STATIC PARENT_SCOPE)
+    endif()
+endfunction()
+
+# =============================================================================
+# Generic option registration + summary system
+# =============================================================================
+#
+# Adds the meta-flag-group pattern (CODEC/FORMAT/DECOMPRESSOR families) and
+# a per-component summary printer that picks up every option declared via
+# the new helpers — no need to hardcode each new flag in a printer.
+#
+# State is kept in GLOBAL properties keyed by component name:
+#   NEUTRINO_OPTIONS_<COMP>           — list of option var names
+#   NEUTRINO_OPTION_DESC_<VAR>        — description string
+#   NEUTRINO_OPTION_GROUP_<VAR>       — group var name (or empty)
+#   NEUTRINO_OPTION_DEFAULT_<VAR>     — original default (for diagnostics)
+#   NEUTRINO_COMPONENTS               — list of registered component names
+#
+# These are configure-time only; they reset on each cmake reconfigure.
+# =============================================================================
+
+#[=============================================================================[
+neutrino_option_group(<group_var> <description> <default>)
+
+Declare a meta-flag that controls the default value of dependent options.
+Creates a CACHE BOOL variable that consumers can set to bulk-enable or
+bulk-disable a whole category.
+
+Example:
+    neutrino_option_group(NEUTRINO_ONYX_IMAGE_CODEC_ALL
+        "Default state for all onyx_image codec selectors"
+        ON)
+    neutrino_option(NEUTRINO_ONYX_IMAGE_CODEC_LBM
+        "Enable LBM (IFF) decoder"
+        ${NEUTRINO_ONYX_IMAGE_CODEC_ALL}
+        GROUP NEUTRINO_ONYX_IMAGE_CODEC_ALL)
+
+A consumer can then bulk-disable + opt-in:
+    set(NEUTRINO_ONYX_IMAGE_CODEC_ALL OFF CACHE BOOL "" FORCE)
+    set(NEUTRINO_ONYX_IMAGE_CODEC_LBM ON  CACHE BOOL "" FORCE)
+#]=============================================================================]
+function(neutrino_option_group GROUP_VAR DESCRIPTION DEFAULT)
+    if(NOT GROUP_VAR MATCHES "^NEUTRINO_")
+        message(FATAL_ERROR
+            "neutrino_option_group: '${GROUP_VAR}' must start with NEUTRINO_")
+    endif()
+    if(NOT DEFAULT MATCHES "^(ON|OFF)$")
+        message(FATAL_ERROR
+            "neutrino_option_group: DEFAULT must be ON or OFF, got '${DEFAULT}'")
+    endif()
+
+    # Plain CACHE BOOL — consumers set via -D or set(... CACHE BOOL "" FORCE).
+    # No registration needed; the printer derives group state by reading
+    # whichever GROUP each option declares.
+    set(${GROUP_VAR} ${DEFAULT} CACHE BOOL "${DESCRIPTION}")
+endfunction()
+
+#[=============================================================================[
+neutrino_option(<var_name> <description> <default> [GROUP <group_var>])
+
+Declare a single option, registering it for the per-component summary
+printer (neutrino_print_summary).
+
+The var name must follow the NEUTRINO_<COMP>_<CATEGORY>_<NAME> convention.
+The component name is extracted from positions 2..(N-2) of the underscore
+split, so any name shape works as long as the NEUTRINO_ prefix is present.
+
+If GROUP is given, the option's effective default is the *current value*
+of that group variable — not the literal <default>. This makes meta-flag
+bulk-set/individual-override behavior work:
+
+    set(NEUTRINO_X_CODEC_ALL OFF CACHE BOOL "" FORCE)   # parent script
+    neutrino_option_group(NEUTRINO_X_CODEC_ALL "..." ON) # in component
+    neutrino_option(NEUTRINO_X_CODEC_LBM "..." ON
+                    GROUP NEUTRINO_X_CODEC_ALL)
+    # → NEUTRINO_X_CODEC_LBM defaults to OFF (the parent's group value),
+    #   regardless of the literal `ON` written in this declaration.
+
+The literal default is still useful as documentation of "the upstream
+recommendation" — it shows up in `neutrino_print_summary` annotations
+when the actual value differs.
+#]=============================================================================]
+function(neutrino_option VAR_NAME DESCRIPTION DEFAULT)
+    cmake_parse_arguments(_NO "" "GROUP" "" ${ARGN})
+
+    if(NOT VAR_NAME MATCHES "^NEUTRINO_([A-Z0-9_]+)$")
+        message(FATAL_ERROR
+            "neutrino_option: '${VAR_NAME}' must match NEUTRINO_<COMP>_<CATEGORY>_<NAME>")
+    endif()
+    if(NOT DEFAULT MATCHES "^(ON|OFF)$")
+        message(FATAL_ERROR
+            "neutrino_option: DEFAULT for '${VAR_NAME}' must be ON or OFF, got '${DEFAULT}'")
+    endif()
+
+    # Effective default: group value (if grouped) else literal default.
+    set(_effective_default "${DEFAULT}")
+    if(_NO_GROUP)
+        if(NOT DEFINED ${_NO_GROUP})
+            message(FATAL_ERROR
+                "neutrino_option: GROUP '${_NO_GROUP}' for '${VAR_NAME}' "
+                "is not defined. Call neutrino_option_group(...) before "
+                "any option that references it.")
+        endif()
+        if(${_NO_GROUP})
+            set(_effective_default ON)
+        else()
+            set(_effective_default OFF)
+        endif()
+    endif()
+
+    # Declare the cache var (no-op if user already set it via -D / FORCE).
+    set(${VAR_NAME} ${_effective_default} CACHE BOOL "${DESCRIPTION}")
+
+    # Extract component name: everything between NEUTRINO_ and the last
+    # two underscore-separated tokens (CATEGORY_NAME). Falls back to
+    # first token if the name is short.
+    string(REGEX REPLACE "^NEUTRINO_" "" _stripped "${VAR_NAME}")
+    string(REPLACE "_" ";" _parts "${_stripped}")
+    list(LENGTH _parts _nparts)
+    if(_nparts LESS 3)
+        message(FATAL_ERROR
+            "neutrino_option: '${VAR_NAME}' missing CATEGORY_NAME suffix")
+    endif()
+    # COMP = parts[0..N-3], CATEGORY = parts[N-2], NAME = parts[N-1]
+    math(EXPR _comp_end "${_nparts} - 3")
+    set(_comp_parts "")
+    foreach(_i RANGE 0 ${_comp_end})
+        list(GET _parts ${_i} _p)
+        list(APPEND _comp_parts ${_p})
+    endforeach()
+    string(REPLACE ";" "_" _comp_name "${_comp_parts}")
+
+    # Register globally for the summary printer.
+    set_property(GLOBAL APPEND PROPERTY NEUTRINO_OPTIONS_${_comp_name} "${VAR_NAME}")
+    set_property(GLOBAL PROPERTY NEUTRINO_OPTION_DESC_${VAR_NAME} "${DESCRIPTION}")
+    set_property(GLOBAL PROPERTY NEUTRINO_OPTION_GROUP_${VAR_NAME} "${_NO_GROUP}")
+    set_property(GLOBAL PROPERTY NEUTRINO_OPTION_DEFAULT_${VAR_NAME} "${DEFAULT}")
+
+    # Add the component to the registry if not already there.
+    get_property(_components GLOBAL PROPERTY NEUTRINO_COMPONENTS)
+    if(NOT _comp_name IN_LIST _components)
+        set_property(GLOBAL APPEND PROPERTY NEUTRINO_COMPONENTS "${_comp_name}")
+    endif()
+endfunction()
+
+#[=============================================================================[
+neutrino_print_summary(<component_name>)
+
+Print every option registered for <component_name> via neutrino_option,
+grouped by category (BUILD/ENABLE/USE/CODEC/FORMAT/DECOMPRESSOR/...). For
+codec-like categories with many members, members are condensed into a
+single ON/OFF list rather than one line per option.
+
+Designed to coexist with the legacy neutrino_print_options (which prints
+the hardcoded set of standard options). Calling both is fine — they
+cover disjoint axes.
+#]=============================================================================]
+function(neutrino_print_summary COMPONENT_NAME)
+    string(TOUPPER "${COMPONENT_NAME}" COMP_UPPER)
+    string(REPLACE "-" "_" COMP_UPPER "${COMP_UPPER}")
+
+    get_property(_opts GLOBAL PROPERTY NEUTRINO_OPTIONS_${COMP_UPPER})
+    if(NOT _opts)
+        return()
+    endif()
+
+    # Bucket options by category. Category is the second-to-last
+    # underscore-separated token in the name.
+    set(_categories "")
+    foreach(_opt ${_opts})
+        string(REGEX REPLACE "^NEUTRINO_${COMP_UPPER}_" "" _suffix "${_opt}")
+        string(REPLACE "_" ";" _parts "${_suffix}")
+        list(LENGTH _parts _n)
+        math(EXPR _cat_idx "${_n} - 2")
+        if(_cat_idx LESS 0)
+            set(_cat_idx 0)
+        endif()
+        list(GET _parts ${_cat_idx} _cat)
+        list(APPEND _cat_${_cat}_opts "${_opt}")
+        if(NOT _cat IN_LIST _categories)
+            list(APPEND _categories ${_cat})
+        endif()
+    endforeach()
+
+    message(STATUS "")
+    message(STATUS "─── neutrino:${COMPONENT_NAME} ─────────────────────────────")
+
+    # Order categories: standard ones first, then everything else.
+    set(_ordered_cats BUILD USE ENABLE CODEC FORMAT DECOMPRESSOR)
+    set(_seen_cats "")
+    foreach(_cat ${_ordered_cats})
+        if(_cat IN_LIST _categories)
+            _neutrino_print_category("${COMPONENT_NAME}" "${_cat}" "${_cat_${_cat}_opts}")
+            list(APPEND _seen_cats ${_cat})
+        endif()
+    endforeach()
+    foreach(_cat ${_categories})
+        if(NOT _cat IN_LIST _seen_cats)
+            _neutrino_print_category("${COMPONENT_NAME}" "${_cat}" "${_cat_${_cat}_opts}")
+        endif()
+    endforeach()
+
+    message(STATUS "─────────────────────────────────────────────────────────────")
+    message(STATUS "")
+endfunction()
+
+# Internal: print one category block. "Bulk" categories (CODEC, FORMAT,
+# DECOMPRESSOR) get a compact ON/OFF roster; others get one line per
+# option with the description.
+function(_neutrino_print_category COMPONENT_NAME CATEGORY OPTS)
+    list(LENGTH OPTS _n)
+
+    # Pick the right format: bulk-categories print roster, others verbose.
+    set(_bulk_categories CODEC FORMAT DECOMPRESSOR)
+    if(CATEGORY IN_LIST _bulk_categories)
+        # Roster mode: ON: ...  OFF: ...
+        set(_on_names "")
+        set(_off_names "")
+        set(_on_count 0)
+        foreach(_opt ${OPTS})
+            string(REGEX REPLACE ".*_${CATEGORY}_" "" _short "${_opt}")
+            if(${${_opt}})
+                list(APPEND _on_names "${_short}")
+                math(EXPR _on_count "${_on_count} + 1")
+            else()
+                list(APPEND _off_names "${_short}")
+            endif()
+        endforeach()
+        message(STATUS "  ${CATEGORY}S (${_on_count}/${_n} on):")
+        if(_on_names)
+            string(REPLACE ";" " " _on_str "${_on_names}")
+            message(STATUS "    ON:  ${_on_str}")
+        endif()
+        if(_off_names)
+            string(REPLACE ";" " " _off_str "${_off_names}")
+            message(STATUS "    OFF: ${_off_str}")
+        endif()
+    else()
+        # Verbose mode: one line per option.
+        foreach(_opt ${OPTS})
+            string(REGEX REPLACE "^NEUTRINO_[A-Z0-9_]+_${CATEGORY}_" "" _short "${_opt}")
+            if(${${_opt}})
+                set(_val "ON")
+            else()
+                set(_val "OFF")
+            endif()
+            message(STATUS "  ${CATEGORY}_${_short}: ${_val}")
+        endforeach()
     endif()
 endfunction()
