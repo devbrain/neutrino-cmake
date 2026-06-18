@@ -45,6 +45,7 @@ set(NEUTRINO_WARNINGS_MSVC
     /w14906             # String literal cast to 'LPWSTR'
     /w14928             # Illegal copy-initialization
     /wd4251             # Disable DLL interface warning for STL types
+    /wd5285             # doctest specializes std::tuple (N5014); third-party header, not ours
 )
 
 # Add /WX if warnings as errors is enabled
