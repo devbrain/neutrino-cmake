@@ -36,5 +36,9 @@ function(neutrino_fetch_doctest)
     # Create interface library
     add_library(doctest INTERFACE)
     add_library(doctest::doctest ALIAS doctest)
-    target_include_directories(doctest INTERFACE "${doctest_SOURCE_DIR}")
+    target_include_directories(doctest SYSTEM INTERFACE "${doctest_SOURCE_DIR}")
+    # Make doctest include the real STL headers instead of forward-declaring std types
+    # (e.g. std::tuple). Newer standard libraries forbid such forward declarations
+    # (MSVC C5285 / N5014), which breaks the build under -Werror / /WX.
+    target_compile_definitions(doctest INTERFACE DOCTEST_CONFIG_USE_STD_HEADERS)
 endfunction()
