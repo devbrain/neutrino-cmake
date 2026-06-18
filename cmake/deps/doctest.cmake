@@ -6,7 +6,7 @@
 
 include_guard(GLOBAL)
 
-set(NEUTRINO_DOCTEST_VERSION "2.4.11" CACHE STRING "doctest version")
+set(NEUTRINO_DOCTEST_VERSION "2.5.2" CACHE STRING "doctest version")
 
 function(neutrino_fetch_doctest)
     if(TARGET doctest::doctest)
@@ -18,9 +18,10 @@ function(neutrino_fetch_doctest)
 
     include(FetchContent)
 
-    # Download just the header file from releases
+    # Download just the single header from the tag. (2.5.x releases no longer attach a
+    # standalone doctest.h asset, so fetch it from the repo tree at the version tag.)
     FetchContent_Declare(doctest
-        URL https://github.com/doctest/doctest/releases/download/v${NEUTRINO_DOCTEST_VERSION}/doctest.h
+        URL https://raw.githubusercontent.com/doctest/doctest/v${NEUTRINO_DOCTEST_VERSION}/doctest/doctest.h
         DOWNLOAD_NO_EXTRACT TRUE
     )
 
