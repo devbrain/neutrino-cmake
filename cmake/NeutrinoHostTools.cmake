@@ -296,34 +296,70 @@ function(neutrino_bootstrap_local_tool TOOL_NAME)
         endif()
 
         if(_needs_build)
-            # Find the host compiler
-            find_program(_host_cxx
-                NAMES c++ g++ clang++ cl
-                NO_CMAKE_FIND_ROOT_PATH
-            )
-            if(NOT _host_cxx)
-                message(FATAL_ERROR
-                    "[Neutrino] Host tool ${TOOL_NAME} compilation failed: "
-                    "No host C++ compiler found (c++/g++/clang++/cl)."
+            # Detect language from source files
+            set(_has_cpp FALSE)
+            foreach(_src ${ARG_SOURCES})
+                if(_src MATCHES "\\.(cpp|cc|cxx)$")
+                    set(_has_cpp TRUE)
+                endif()
+            endforeach()
+
+            if(_has_cpp)
+                # Find the host C++ compiler
+                find_program(_host_compiler
+                    NAMES c++ g++ clang++ cl
+                    NO_CMAKE_FIND_ROOT_PATH
                 )
+                if(NOT _host_compiler)
+                    message(FATAL_ERROR
+                        "[Neutrino] Host tool ${TOOL_NAME} compilation failed: "
+                        "No host C++ compiler found (c++/g++/clang++/cl)."
+                    )
+                endif()
+            else()
+                # Find the host C compiler
+                find_program(_host_compiler
+                    NAMES cc gcc clang cl
+                    NO_CMAKE_FIND_ROOT_PATH
+                )
+                if(NOT _host_compiler)
+                    message(FATAL_ERROR
+                        "[Neutrino] Host tool ${TOOL_NAME} compilation failed: "
+                        "No host C compiler found (cc/gcc/clang/cl)."
+                    )
+                endif()
             endif()
 
             file(MAKE_DIRECTORY "${_root}")
-            message(STATUS "[Neutrino] Host tool ${TOOL_NAME}: Compiling with ${_host_cxx}...")
+            message(STATUS "[Neutrino] Host tool ${TOOL_NAME}: Compiling with ${_host_compiler}...")
 
             # Compile options based on host compiler type
-            if(_host_cxx MATCHES "cl(\.exe)?$")
+            if(_host_compiler MATCHES "cl(\\.exe)?$")
                 # MSVC compilation
-                execute_process(
-                    COMMAND ${_host_cxx} /std:c++${ARG_STD} /EHsc /O2 ${ARG_SOURCES} /Fe:"${_bin}"
-                    RESULT_VARIABLE _rc
-                )
+                if(_has_cpp)
+                    execute_process(
+                        COMMAND ${_host_compiler} /std:c++${ARG_STD} /EHsc /O2 ${ARG_SOURCES} /Fe:"${_bin}"
+                        RESULT_VARIABLE _rc
+                    )
+                else()
+                    execute_process(
+                        COMMAND ${_host_compiler} /O2 ${ARG_SOURCES} /Fe:"${_bin}"
+                        RESULT_VARIABLE _rc
+                    )
+                endif()
             else()
                 # GCC/Clang compilation
-                execute_process(
-                    COMMAND ${_host_cxx} -std=c++${ARG_STD} -O2 ${ARG_SOURCES} -o "${_bin}"
-                    RESULT_VARIABLE _rc
-                )
+                if(_has_cpp)
+                    execute_process(
+                        COMMAND ${_host_compiler} -std=c++${ARG_STD} -O2 ${ARG_SOURCES} -o "${_bin}"
+                        RESULT_VARIABLE _rc
+                    )
+                else()
+                    execute_process(
+                        COMMAND ${_host_compiler} -O2 ${ARG_SOURCES} -o "${_bin}"
+                        RESULT_VARIABLE _rc
+                    )
+                endif()
             endif()
 
             if(NOT _rc EQUAL 0)
