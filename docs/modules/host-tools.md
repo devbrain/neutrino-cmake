@@ -78,6 +78,31 @@ Arguments:
 | `WORKING_DIRECTORY` | Working directory |
 | `COMMENT` | Build output message |
 
+### neutrino_bootstrap_local_tool
+
+Build a local developer or build tool natively on the host machine:
+
+```cmake
+neutrino_bootstrap_local_tool(bin2c
+    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/tools/buildtools/bin2c.cc"
+    STD 20
+)
+```
+
+When not cross-compiling, it creates a normal executable target. When cross-compiling, it compiles the tool natively using the host compiler and registers it as an `IMPORTED` global target, satisfying target generator expressions like `$<TARGET_FILE:bin2c>` elsewhere in the project.
+
+Arguments:
+
+| Argument | Description |
+|----------|-------------|
+| `SOURCES` | List of source files for the tool |
+| `STD` | C++ standard to compile with (default: `20`) |
+
+After calling, the tool is also registered and available as:
+```cmake
+${NEUTRINO_BIN2C_EXECUTABLE}
+```
+
 ## How It Works
 
 ### Not Cross-Compiling
