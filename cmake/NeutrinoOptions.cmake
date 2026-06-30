@@ -151,6 +151,10 @@ function(neutrino_define_library_options COMPONENT_NAME)
         set(_default_shared OFF)
     endif()
 
+    if(NEUTRINO_PLATFORM_EMSCRIPTEN)
+        set(_default_shared OFF)
+    endif()
+
     option(${PREFIX}_BUILD_SHARED
         "Build ${COMPONENT_NAME} as shared library"
         ${_default_shared}
