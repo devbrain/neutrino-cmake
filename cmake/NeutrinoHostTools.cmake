@@ -306,28 +306,30 @@ function(neutrino_bootstrap_local_tool TOOL_NAME)
 
             if(_has_cpp)
                 # Find the host C++ compiler
-                find_program(_host_compiler
+                find_program(_host_compiler_${TOOL_NAME}
                     NAMES c++ g++ clang++ cl
                     NO_CMAKE_FIND_ROOT_PATH
                 )
-                if(NOT _host_compiler)
+                if(NOT _host_compiler_${TOOL_NAME})
                     message(FATAL_ERROR
                         "[Neutrino] Host tool ${TOOL_NAME} compilation failed: "
                         "No host C++ compiler found (c++/g++/clang++/cl)."
                     )
                 endif()
+                set(_host_compiler "${_host_compiler_${TOOL_NAME}}")
             else()
                 # Find the host C compiler
-                find_program(_host_compiler
+                find_program(_host_compiler_${TOOL_NAME}
                     NAMES cc gcc clang cl
                     NO_CMAKE_FIND_ROOT_PATH
                 )
-                if(NOT _host_compiler)
+                if(NOT _host_compiler_${TOOL_NAME})
                     message(FATAL_ERROR
                         "[Neutrino] Host tool ${TOOL_NAME} compilation failed: "
                         "No host C compiler found (cc/gcc/clang/cl)."
                     )
                 endif()
+                set(_host_compiler "${_host_compiler_${TOOL_NAME}}")
             endif()
 
             file(MAKE_DIRECTORY "${_root}")
