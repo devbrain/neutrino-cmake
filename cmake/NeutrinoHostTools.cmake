@@ -231,3 +231,113 @@ function(neutrino_run_host_tool TOOL_NAME)
         VERBATIM
     )
 endfunction()
+
+#[=============================================================================[
+neutrino_bootstrap_local_tool(<tool_name>
+    SOURCES <sources>...
+    [STD <standard>]
+)
+
+Build a local developer/build tool natively on the host machine.
+When not cross-compiling, it creates a normal executable target.
+When cross-compiling, it compiles the tool natively using the host C++ compiler
+and exposes it as an IMPORTED executable target, so generator expressions
+like $<TARGET_FILE:tool_name> resolve correctly without changes.
+
+Arguments:
+    tool_name   - Name of the target to create/import
+    SOURCES     - Source files for the tool
+    STD         - C++ standard to compile with (default: C++20)
+#]=============================================================================]
+function(neutrino_bootstrap_local_tool TOOL_NAME)
+    cmake_parse_arguments(ARG
+        ""
+        "STD"
+        "SOURCES"
+        ${ARGN}
+    )
+
+    if(NOT ARG_SOURCES)
+        message(FATAL_ERROR "[Neutrino] neutrino_bootstrap_local_tool requires SOURCES argument")
+    endif()
+
+    if(NOT ARG_STD)
+        set(ARG_STD "20")
+    endif()
+
+    string(TOUPPER "${TOOL_NAME}" TOOL_UPPER)
+    string(REPLACE "-" "_" TOOL_UPPER "${TOOL_UPPER}")
+
+    if(NOT NEUTRINO_CROSS_COMPILING)
+        # Normal build: just compile as target
+        add_executable(${TOOL_NAME} ${ARG_SOURCES})
+        set(NEUTRINO_${TOOL_UPPER}_EXECUTABLE "$<TARGET_FILE:${TOOL_NAME}>" CACHE INTERNAL "")
+    else()
+        # Cross-compiling: compile natively for host and import
+        set(_root "${CMAKE_BINARY_DIR}/host-tools/${TOOL_NAME}")
+        
+        if(WIN32)
+            set(_exe_suffix ".exe")
+        else()
+            set(_exe_suffix "")
+        endif()
+        set(_bin "${_root}/${TOOL_NAME}${_exe_suffix}")
+
+        # Check if we need to rebuild (source newer than binary)
+        set(_needs_build TRUE)
+        if(EXISTS "${_bin}")
+            set(_needs_build FALSE)
+            foreach(_src ${ARG_SOURCES})
+                if("${_src}" IS_NEWER_THAN "${_bin}")
+                    set(_needs_build TRUE)
+                    break()
+                endif()
+            endforeach()
+        endif()
+
+        if(_needs_build)
+            # Find the host compiler
+            find_program(_host_cxx
+                NAMES c++ g++ clang++ cl
+                NO_CMAKE_FIND_ROOT_PATH
+            )
+            if(NOT _host_cxx)
+                message(FATAL_ERROR
+                    "[Neutrino] Host tool ${TOOL_NAME} compilation failed: "
+                    "No host C++ compiler found (c++/g++/clang++/cl)."
+                )
+            endif()
+
+            file(MAKE_DIRECTORY "${_root}")
+            message(STATUS "[Neutrino] Host tool ${TOOL_NAME}: Compiling with ${_host_cxx}...")
+
+            # Compile options based on host compiler type
+            if(_host_cxx MATCHES "cl(\.exe)?$")
+                # MSVC compilation
+                execute_process(
+                    COMMAND ${_host_cxx} /std:c++${ARG_STD} /EHsc /O2 ${ARG_SOURCES} /Fe:"${_bin}"
+                    RESULT_VARIABLE _rc
+                )
+            else()
+                # GCC/Clang compilation
+                execute_process(
+                    COMMAND ${_host_cxx} -std=c++${ARG_STD} -O2 ${ARG_SOURCES} -o "${_bin}"
+                    RESULT_VARIABLE _rc
+                )
+            endif()
+
+            if(NOT _rc EQUAL 0)
+                message(FATAL_ERROR "[Neutrino] Host tool ${TOOL_NAME} compilation failed (rc=${_rc})")
+            endif()
+        endif()
+
+        if(NOT TARGET ${TOOL_NAME})
+            add_executable(${TOOL_NAME} IMPORTED GLOBAL)
+            set_target_properties(${TOOL_NAME} PROPERTIES IMPORTED_LOCATION "${_bin}")
+        endif()
+
+        set(NEUTRINO_${TOOL_UPPER}_EXECUTABLE "${_bin}" CACHE INTERNAL "")
+        message(STATUS "[Neutrino] Host tool ${TOOL_NAME} (IMPORTED) = ${_bin}")
+    endif()
+endfunction()
+
