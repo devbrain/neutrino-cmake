@@ -28,6 +28,7 @@ After including NeutrinoInit, these variables are available:
 | `NEUTRINO_PLATFORM_EMSCRIPTEN` | ON for WebAssembly (Emscripten) |
 | `NEUTRINO_PLATFORM_MOBILE` | ON for mobile platforms (Android, iOS) |
 | `NEUTRINO_PLATFORM_WEB` | ON for web platform (Emscripten) |
+| `NEUTRINO_PLATFORM_DESKTOP` | ON for desktop platforms (Windows, Linux, macOS) |
 | `NEUTRINO_PLATFORM_UNIX` | ON for Unix-like (Linux, macOS) |
 | `NEUTRINO_PLATFORM_NAME` | Human-readable platform name |
 
