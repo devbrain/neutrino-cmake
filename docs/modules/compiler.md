@@ -25,7 +25,9 @@ After including NeutrinoInit, these variables are available:
 | `NEUTRINO_PLATFORM_MACOS` | ON for macOS |
 | `NEUTRINO_PLATFORM_IOS` | ON for iOS |
 | `NEUTRINO_PLATFORM_ANDROID` | ON for Android |
-| `NEUTRINO_PLATFORM_EMSCRIPTEN` | ON for WebAssembly |
+| `NEUTRINO_PLATFORM_EMSCRIPTEN` | ON for WebAssembly (Emscripten) |
+| `NEUTRINO_PLATFORM_MOBILE` | ON for mobile platforms (Android, iOS) |
+| `NEUTRINO_PLATFORM_WEB` | ON for web platform (Emscripten) |
 | `NEUTRINO_PLATFORM_UNIX` | ON for Unix-like (Linux, macOS) |
 | `NEUTRINO_PLATFORM_NAME` | Human-readable platform name |
 
