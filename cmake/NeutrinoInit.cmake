@@ -60,7 +60,10 @@ include("${NEUTRINO_CMAKE_DIR}/NeutrinoSanitizers.cmake")
 # 6. Host tools - for cross-compilation support
 include("${NEUTRINO_CMAKE_DIR}/NeutrinoHostTools.cmake")
 
-# 7. Installation helpers
+# 7. Grammar tools - Lemon parser and re2c scanner generators
+include("${NEUTRINO_CMAKE_DIR}/NeutrinoGrammar.cmake")
+
+# 8. Installation helpers
 include("${NEUTRINO_CMAKE_DIR}/NeutrinoInstall.cmake")
 
 # -----------------------------------------------------------------------------
