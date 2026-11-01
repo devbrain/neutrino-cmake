@@ -7,7 +7,7 @@
 include_guard(GLOBAL)
 
 # failsafe 1.1.0: optional variadic messages for the ENFORCE macro family.
-set(NEUTRINO_FAILSAFE_VERSION "d35fca74b1c9f860cc725d5e77a57ce800cc9064" CACHE STRING "failsafe version/tag")
+set(NEUTRINO_FAILSAFE_VERSION "00b71621cb115b55d147f84595af0a8edaaf67c5" CACHE STRING "failsafe version/tag")
 
 function(neutrino_fetch_failsafe)
     if(TARGET neutrino::failsafe OR TARGET failsafe)
