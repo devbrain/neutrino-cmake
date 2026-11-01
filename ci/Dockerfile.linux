@@ -1,0 +1,14 @@
+ARG BASE_IMAGE=dockcross/linux-x64@sha256:785d1407748c711f3dd5262b8a6cfc5866b383865e01fc6a2e95a84d1be2c1a2
+FROM ${BASE_IMAGE}
+
+# Keep the pinned Dockcross compiler; add the SDKs used by SDL consumers.
+# LLVM packages are already installed. Only Debian's repositories are needed
+# for these system libraries, independently of the LLVM snapshot repository.
+RUN rm -f /etc/apt/sources.list.d/llvm.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+       libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev \
+       libxi-dev libxss-dev libwayland-dev libxkbcommon-dev libdrm-dev \
+       libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev libglew-dev \
+       libdbus-1-dev libudev-dev libasound2-dev libpulse-dev \
+    && rm -rf /var/lib/apt/lists/*

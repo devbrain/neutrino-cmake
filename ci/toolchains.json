@@ -1,0 +1,77 @@
+{
+  "linux-gcc": {
+    "dockerfile": "ci/Dockerfile.linux",
+    "image": "dockcross/linux-x64@sha256:785d1407748c711f3dd5262b8a6cfc5866b383865e01fc6a2e95a84d1be2c1a2",
+    "tests": true,
+    "native_linux": true
+  },
+  "linux-clang": {
+    "dockerfile": "ci/Dockerfile.linux",
+    "image": "dockcross/linux-x64-clang@sha256:7ea6382e6fc2b9a170fca2cd58722cc63d020889fd03dbc5b7d342f2b64117d2",
+    "tests": true,
+    "native_linux": true
+  },
+  "android-arm64": {
+    "image": "dockcross/android-arm64@sha256:41d1887baa27c1489c4853c89ac9338c77c7bef4c1518d2dc672bd95faaa1417",
+    "tests": false
+  },
+  "web-wasm": {
+    "image": "dockcross/web-wasm@sha256:0c9e0c1e6532af9c458321fcc11fa7a506c07c1698c51fc15277ce5761ef185b",
+    "tests": false,
+    "smoke_test": true
+  },
+  "windows-msvc": {
+    "host": "Windows",
+    "tests": true,
+    "configure": [
+      "-G",
+      "Visual Studio 17 2022",
+      "-A",
+      "x64"
+    ]
+  },
+  "windows-clangcl": {
+    "host": "Windows",
+    "tests": true,
+    "configure": [
+      "-G",
+      "Visual Studio 17 2022",
+      "-A",
+      "x64",
+      "-T",
+      "ClangCL"
+    ]
+  },
+  "macos-clang": {
+    "host": "Darwin",
+    "tests": true,
+    "configure": [
+      "-G",
+      "Ninja"
+    ]
+  },
+  "ios-arm64": {
+    "host": "Darwin",
+    "tests": false,
+    "configure": [
+      "-G",
+      "Xcode",
+      "-DCMAKE_SYSTEM_NAME=iOS",
+      "-DCMAKE_OSX_SYSROOT=iphoneos",
+      "-DCMAKE_OSX_ARCHITECTURES=arm64",
+      "-DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO"
+    ]
+  },
+  "ios-simulator": {
+    "host": "Darwin",
+    "tests": false,
+    "configure": [
+      "-G",
+      "Xcode",
+      "-DCMAKE_SYSTEM_NAME=iOS",
+      "-DCMAKE_OSX_SYSROOT=iphonesimulator",
+      "-DCMAKE_OSX_ARCHITECTURES=arm64",
+      "-DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO"
+    ]
+  }
+}

@@ -27,6 +27,7 @@ option(NEUTRINO_CMAKE_BUILD_TESTS "Build neutrino-cmake tests" ${PROJECT_IS_TOP_
 
 if(NEUTRINO_CMAKE_BUILD_TESTS)
     enable_testing()
+    find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
     # -------------------------------------------------------------------------
     # Test 1: Verify all modules are included
@@ -39,7 +40,7 @@ if(NEUTRINO_CMAKE_BUILD_TESTS)
     # -------------------------------------------------------------------------
     # Test 2: Test project generation script
     # -------------------------------------------------------------------------
-    set(_test_project_dir "${CMAKE_BINARY_DIR}/test-generated-project")
+    set(_test_project_dir "${CMAKE_BINARY_DIR}/test-lib")
 
     add_test(
         NAME "generator_creates_project"
@@ -48,11 +49,11 @@ if(NEUTRINO_CMAKE_BUILD_TESTS)
 
     add_test(
         NAME "generator_runs"
-        COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/scripts/neutrino-new.py"
+        COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/scripts/neutrino-new.py"
             test-lib
             --type=header-only
             --std=20
-            --output="${CMAKE_BINARY_DIR}"
+            --output "${CMAKE_BINARY_DIR}"
             --force
     )
     set_tests_properties(generator_runs PROPERTIES
@@ -75,6 +76,7 @@ if(NEUTRINO_CMAKE_BUILD_TESTS)
         COMMAND ${CMAKE_COMMAND}
             -S "${_test_project_dir}"
             -B "${_test_project_dir}/build"
+            -DNEUTRINO_CMAKE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/cmake
             -DNEUTRINO_TEST_LIB_BUILD_TESTS=OFF
             -DNEUTRINO_TEST_LIB_BUILD_EXAMPLES=OFF
     )
@@ -89,26 +91,13 @@ if(NEUTRINO_CMAKE_BUILD_TESTS)
         NAME "fetch_doctest"
         COMMAND ${CMAKE_COMMAND}
             -DNEUTRINO_CMAKE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/cmake
-            -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/tests/test_fetch_doctest.cmake"
+            -S "${CMAKE_CURRENT_SOURCE_DIR}/cmake/tests/doctest"
+            -B "${CMAKE_CURRENT_BINARY_DIR}/test-fetch-doctest"
     )
-
-    # Create test script for doctest fetching
-    file(WRITE "${CMAKE_CURRENT_SOURCE_DIR}/cmake/tests/test_fetch_doctest.cmake" [[
-cmake_minimum_required(VERSION 3.20)
-
-list(APPEND CMAKE_MODULE_PATH "${NEUTRINO_CMAKE_DIR}")
-include(NeutrinoInit)
-include(${NEUTRINO_CMAKE_DIR}/deps/doctest.cmake)
-
-neutrino_fetch_doctest()
-
-if(NOT TARGET doctest::doctest)
-    message(FATAL_ERROR "doctest::doctest target not created")
-endif()
-
-message(STATUS "doctest fetch test PASSED")
-]])
-
+    add_test(NAME local_ci_runner
+        COMMAND ${Python3_EXECUTABLE} -m unittest discover
+            -s "${CMAKE_CURRENT_SOURCE_DIR}/scripts/tests" -v
+    )
 endif()
 
 # =============================================================================

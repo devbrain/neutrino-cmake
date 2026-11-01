@@ -15,6 +15,7 @@ neutrino-cmake provides centralized CMake modules for consistent builds across a
 
 ## Documentation
 
+- [Local CI](docs/local-ci.md) - Run the compiler/platform matrix locally with Dockcross, without GitHub Actions
 - [Getting Started](docs/getting-started.md) - Step-by-step integration guide
 - [Creating a Library](docs/creating-a-library.md) - How to create a new Neutrino library
 - [Dependencies](docs/dependencies/) - Individual dependency documentation

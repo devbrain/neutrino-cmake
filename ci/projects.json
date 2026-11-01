@@ -1,0 +1,21 @@
+{
+  "failsafe": {"component": "FAILSAFE", "target": "failsafe", "headers": ["failsafe/enforce.hh", "exception", "string"], "body": "int calls = 0; ENFORCE(++calls == 1, \"local CI\", 42); try { ENFORCE(false, \"value \", 42); } catch (const std::exception& e) { return calls == 1 && std::string(e.what()).find(\"42\") != std::string::npos ? 0 : 1; } return 1;"},
+  "euler": {"component": "EULER", "target": "euler", "headers": ["euler/vector/vector.hh"], "body": "euler::vector<float, 3> v(1.0f, 2.0f, 3.0f); return v[1] == 2.0f ? 0 : 1;", "windows": ["-DNEUTRINO_EULER_ENABLE_XSIMD=OFF"]},
+  "lib_bstream": {"component": "BSTREAM", "fetch": "bstream", "target": "bstream", "headers": ["bstream/span_reader.hh"], "body": "bstream::span_reader reader; return reader.eof() ? 0 : 1;"},
+  "mio": {"component": "MIO", "target": "mio", "headers": ["mio/mmap.hpp"], "body": "mio::mmap_source mapping; return mapping.is_open() ? 1 : 0;", "unsupported": {"web-wasm": "mio explicitly disables memory-mapped I/O on Emscripten and creates only a placeholder target."}},
+  "crate": {"component": "CRATE", "target": "crate", "headers": ["crate/crate.hh"]},
+  "datascript": {"component": "DATASCRIPT", "target": "datascript", "headers": ["datascript/parser_error.hh"]},
+  "libiff": {"component": "LIBIFF", "target": "iff", "headers": ["iff/parser.hh"]},
+  "mz-explode": {"component": "MZEXPLODE", "fetch": "mzexplode", "target": "libexe", "headers": ["libexe/formats/mz_file.hpp"]},
+  "scaler": {"component": "SCALER", "target": "scaler", "headers": ["scaler/cpu/epx.hh"]},
+  "onyx_image": {"component": "ONYX_IMAGE", "target": "onyx_image", "headers": ["onyx_image/onyx_image.hpp"]},
+  "onyx_font": {"component": "ONYX_FONT", "target": "onyx_font", "headers": ["onyx_font/bitmap_font.hh"], "configure": ["-DNEUTRINO_ONYX_FONT_BUILD_DEMOS=OFF"]},
+  "musac": {"component": "MUSAC", "target": "musac", "headers": ["musac/audio_system.hh"]},
+  "onyx_anim": {"component": "ONYX_ANIM", "target": "onyx_anim_sdk", "headers": ["onyx_anim/sdk/decoder.hh"]},
+  "lib_sdlpp": {"component": "SDLPP", "fetch": "sdlpp", "target": "sdlpp", "headers": ["sdlpp/core/core.hh"]},
+  "onyx_ui": {"component": "ONYX_UI", "target": "onyxui", "headers": ["onyxui/ui.hh"]},
+  "lib_nuklearpp": {"component": "NUKLEARPP", "fetch": "nuklearpp", "target": "nuklearpp", "headers": ["nuklearpp/nuklearpp.hh"]},
+  "neutrino": {"component": "NEUTRINO", "target": "neutrino", "headers": ["neutrino/neutrino.hh"]},
+  "warlords": {"component": "WARLORDS", "target": "warlords_common", "headers": []},
+  "neutrino-cmake": {"component": "CMAKE", "fetch": "neutrino_cmake", "headers": []}
+}
