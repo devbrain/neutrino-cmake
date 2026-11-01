@@ -6,7 +6,8 @@
 
 include_guard(GLOBAL)
 
-set(NEUTRINO_FAILSAFE_VERSION "master" CACHE STRING "failsafe version/tag")
+# failsafe 1.1.0: optional variadic messages for the ENFORCE macro family.
+set(NEUTRINO_FAILSAFE_VERSION "d35fca74b1c9f860cc725d5e77a57ce800cc9064" CACHE STRING "failsafe version/tag")
 
 function(neutrino_fetch_failsafe)
     if(TARGET neutrino::failsafe OR TARGET failsafe)
@@ -21,7 +22,8 @@ function(neutrino_fetch_failsafe)
     FetchContent_Declare(failsafe
         GIT_REPOSITORY https://github.com/devbrain/failsafe.git
         GIT_TAG ${NEUTRINO_FAILSAFE_VERSION}
-        GIT_SHALLOW TRUE
+        # Commit pins must remain fetchable after the upstream branch advances.
+        GIT_SHALLOW FALSE
     )
 
     # Disable failsafe tests and examples when used as dependency
