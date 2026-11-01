@@ -25,6 +25,7 @@ target_link_libraries(mylib PUBLIC neutrino::failsafe)
 | [termcolor](termcolor.md) | `termcolor::termcolor` | Terminal colors |
 | [utf8cpp](utf8cpp.md) | `utf8cpp::utf8cpp` | UTF-8 handling |
 | [expected](expected.md) | `tl::expected` | std::expected backport |
+| [magic_enum](magic_enum.md) | `magic_enum::magic_enum` | Enum names and reflection |
 | [xsimd](xsimd.md) | `xsimd::xsimd` | SIMD abstraction |
 | [benchmark](benchmark.md) | `benchmark::benchmark` | Google Benchmark |
 | [SDL2](SDL2.md) | `SDL2::SDL2` | Simple DirectMedia Layer 2 |

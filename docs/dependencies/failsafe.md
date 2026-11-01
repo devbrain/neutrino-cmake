@@ -17,9 +17,34 @@ target_link_libraries(mylib PUBLIC neutrino::failsafe)
 
 ## Version
 
+The recipe pins a tested commit. Override it before including the recipe if needed:
+
 ```cmake
 set(NEUTRINO_FAILSAFE_VERSION "master" CACHE STRING "")
 ```
+
+## Enum and Type Names
+
+Enum names are optional. Enable them before fetching Failsafe:
+
+```cmake
+set(NEUTRINO_FAILSAFE_USE_MAGIC_ENUM ON CACHE BOOL "")
+include(${NEUTRINO_CMAKE_DIR}/deps/failsafe.cmake)
+neutrino_fetch_failsafe()
+```
+
+This automatically adds [magic_enum](magic_enum.md) for enum formatting in
+messages, enforcement errors, exceptions, and logs. The option defaults to OFF.
+
+Compile-time type names need no option or extra dependency:
+
+```cpp
+#include <failsafe/type_name.hh>
+static_assert(failsafe::type_name_v<int> == "int");
+```
+
+`failsafe::type_hash_v<T>` provides a CRC32 of the name. Names and hashes depend on
+the compiler; hashes can collide and are not persistent type identifiers.
 
 ## Notes
 
