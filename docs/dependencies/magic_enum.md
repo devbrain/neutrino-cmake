@@ -23,11 +23,12 @@ set(NEUTRINO_MAGIC_ENUM_VERSION "0.9.8" CACHE STRING "")
 
 ## Failsafe Integration
 
-Failsafe's enum formatting is optional and defaults to OFF. Set
+Failsafe's enum-name reflection is optional and defaults to OFF. Set
 `NEUTRINO_FAILSAFE_USE_MAGIC_ENUM=ON` before adding Failsafe to enable enum names in
 messages, enforcement errors, exceptions, and logs. Failsafe then fetches and links
 this dependency automatically. Values without a reflected name use their underlying
-integer; the default reflection range is -128 to 127.
+integer; the default reflection range is -128 to 127. With the option OFF, Failsafe
+uses `(type_name:number)`, for example `(draw_style:0)`, without this dependency.
 
 ## Links
 

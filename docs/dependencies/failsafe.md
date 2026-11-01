@@ -34,7 +34,8 @@ neutrino_fetch_failsafe()
 ```
 
 This automatically adds [magic_enum](magic_enum.md) for enum formatting in
-messages, enforcement errors, exceptions, and logs. The option defaults to OFF.
+messages, enforcement errors, exceptions, and logs. The option defaults to OFF,
+which formats enums as `(type_name:number)`, for example `(draw_style:0)`.
 
 Compile-time type names need no option or extra dependency:
 
