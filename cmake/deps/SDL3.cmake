@@ -10,8 +10,6 @@ set(NEUTRINO_SDL3_VERSION "3.4.0" CACHE STRING "SDL3 version")
 
 function(neutrino_fetch_SDL3)
     cmake_parse_arguments(NEUTRINO_SDL3 "SHARED;STATIC" "" "" ${ARGN})
-    set(options SHARED STATIC)
-    cmake_parse_arguments(NEUTRINO_SDL3 "" "" "${options}" ${ARGN})
 
     if(TARGET SDL3::SDL3)
         message(STATUS "[Neutrino] SDL3 already available")
