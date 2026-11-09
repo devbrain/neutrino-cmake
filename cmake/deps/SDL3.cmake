@@ -54,6 +54,13 @@ function(neutrino_fetch_SDL3)
     # Disable X11 XTEST extension (requires libxtst-dev which may not be available in CI)
     set(SDL_X11_XTEST OFF CACHE BOOL "" FORCE)
 
+    # SDL 3.4.0 passes escaped quotes to check_c_source_compiles and expects them unescaped
+    # (CMP0219 OLD). CMake 4.4 added CMP0219 and warns while it is unset. Function scope:
+    # SDL only.
+    if(CMAKE_VERSION VERSION_GREATER_EQUAL 4.4)
+        set(CMAKE_POLICY_DEFAULT_CMP0219 OLD)
+    endif()
+
     FetchContent_MakeAvailable(SDL3)
 
     # Create alias if needed
