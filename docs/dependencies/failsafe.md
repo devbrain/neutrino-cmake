@@ -51,6 +51,8 @@ the compiler; hashes can collide and are not persistent type identifiers.
 
 - Header-only library
 - Provides exception macros, enforce assertions, and logging
+- `ENFORCE` checks `std::optional`, `std::unique_ptr` and `std::shared_ptr` in place
+  (no copy); `.get()` returns the optional's value or the pointer itself
 - Part of the Neutrino ecosystem
 
 ## Example

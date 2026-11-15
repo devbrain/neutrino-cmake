@@ -6,8 +6,9 @@
 
 include_guard(GLOBAL)
 
-# failsafe 1.1.0: variadic enforcement, enum type/value fallback, and optional enum names.
-set(NEUTRINO_FAILSAFE_VERSION "4afa96fa0fe79743168dc9facbe2eeff595ce67d" CACHE STRING "failsafe version/tag")
+# failsafe 1.1.0: variadic enforcement, enum type/value fallback, optional enum names, and
+# enforcement on std::optional, std::unique_ptr and std::shared_ptr.
+set(NEUTRINO_FAILSAFE_VERSION "6408ee22e539a005257115800380b57463f30bf0" CACHE STRING "failsafe version/tag")
 
 function(neutrino_fetch_failsafe)
     if(TARGET neutrino::failsafe OR TARGET failsafe)
