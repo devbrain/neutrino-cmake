@@ -53,6 +53,10 @@ the compiler; hashes can collide and are not persistent type identifiers.
 - Provides exception macros, enforce assertions, and logging
 - `ENFORCE` checks `std::optional`, `std::unique_ptr` and `std::shared_ptr` in place
   (no copy); `.get()` returns the optional's value or the pointer itself
+- `set_backend()` is thread-safe: a backend replaced while other threads log lives until
+  the calls in it return; `exchange_backend()` returns the backend it replaced
+- `failsafe/logger/backend/capture_backend.hh`: `scoped_log_capture` records the messages
+  logged while it lives, for tests, and puts back the backend it replaced
 - Part of the Neutrino ecosystem
 
 ## Example
