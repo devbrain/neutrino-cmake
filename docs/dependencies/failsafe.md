@@ -47,6 +47,10 @@ static_assert(failsafe::type_name_v<int> == "int");
 `failsafe::type_hash_v<T>` provides a CRC32 of the name. Names and hashes depend on
 the compiler; hashes can collide and are not persistent type identifiers.
 
+The name is read from the compiler's own signature format, not from the compiler macros,
+so it also works in an IDE's clangd that emulates GCC (CLion's defines `__GNUC__` without
+`__clang__`).
+
 ## Notes
 
 - Header-only library

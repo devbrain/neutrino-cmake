@@ -8,8 +8,8 @@ include_guard(GLOBAL)
 
 # failsafe 1.1.0: variadic enforcement, enum type/value fallback, optional enum names,
 # enforcement on std::optional, std::unique_ptr and std::shared_ptr, thread-safe backend
-# swaps, and scoped_log_capture for tests.
-set(NEUTRINO_FAILSAFE_VERSION "b382e0b923624fabfc36d04d126edd33f009df4a" CACHE STRING "failsafe version/tag")
+# swaps, scoped_log_capture for tests, and type names under a clangd that emulates GCC.
+set(NEUTRINO_FAILSAFE_VERSION "26d72ece9a54d7529eb7e6281f2d808c90e5be63" CACHE STRING "failsafe version/tag")
 
 function(neutrino_fetch_failsafe)
     if(TARGET neutrino::failsafe OR TARGET failsafe)
